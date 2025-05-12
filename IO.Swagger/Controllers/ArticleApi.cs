@@ -44,7 +44,7 @@ namespace IO.Swagger.Controllers
         /// <response code="200">Successful response provides a list of article representations.</response>
         /// <response code="400">If the provided company name is invalid, the list of article identifier is empty,    
         /// or any article identifier does not conform to the identified rules, then the service responds with a 400 (Bad Request) status.</response>
-        [HttpGet]       
+        [HttpGet]
         [Route("/apps/prod-webshop-service-app/webshop-service/articles/{company}")]
         [ValidateModelState]
         [SwaggerOperation("GetArticles")]
@@ -119,10 +119,10 @@ namespace IO.Swagger.Controllers
             {
                 param = null;
                 articleIds = null;
-                links = null;                
-               
+                links = null;
+
             }
-           
+
         }
 
         /// <summary>
@@ -297,7 +297,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorInfo), description: "If the provided company name is invalid, the service responds with a 400 (Bad Request) status and an ErrorInfo object.")]
         public virtual async Task<IActionResult> GetArticlesStocks([FromRoute][Required] string company, [FromQuery][Required()] string articleIds, [FromQuery] string branchId)
         {
-            return await GetArticleStocks(company, articleIds, branchId ?? null); 
+            return await GetArticleStocks(company, articleIds, branchId ?? null);
         }
 
         /// <summary>
@@ -319,7 +319,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(ErrorInfo), description: "If the article with given id does not exist, the service responds with a 404 (Not Found) status.")]
         public virtual async Task<IActionResult> GetArticleStockById([FromRoute][Required] string company, [FromRoute][Required] string articleId, [FromQuery] string branchId)
         {
-           if (!Companies.IsCompanyExists(company))
+            if (!Companies.IsCompanyExists(company))
             {
                 return StatusCode(400, (new ErrorInfo()
                 {
@@ -396,7 +396,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorInfo), description: "If the provided company name is invalid, the service responds with a 400 (Bad Request) status and an ErrorInfo object.")]
         public virtual async Task<IActionResult> GetArticleStocksSum([FromRoute][Required] string company, [FromQuery][Required()] string articleIds)
         {
-           if (!Companies.IsCompanyExists(company))
+            if (!Companies.IsCompanyExists(company))
             {
                 return StatusCode(400, (new ErrorInfo()
                 {
@@ -423,13 +423,13 @@ namespace IO.Swagger.Controllers
                                 { "self", new LinkEntry(Url.Action(nameof(GetArticleById), values: new { company, articleId = dr["articleId"].ToString()}))} };
                         ArticleStockSumInfo articleStockSumInfo = new ArticleStockSumInfo()
                         {
-                            
+
                             ArticleId = dr["articleId"].ToString(),
                             StockSum = new ArticleStockSum()
                             {
                                 StockSum = Convert.ToDouble(dr["stockSum"]),
                                 Links = link
-                            }                            
+                            }
                         };
                         articleStockSumInfos.Add(articleStockSumInfo);
                         link = null;
@@ -472,7 +472,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorInfo), description: "If the provided company name is invalid, the service responds with a 400 (Bad Request) status and an ErrorInfo object.")]
         public virtual async Task<IActionResult> GetArticleVendors([FromRoute][Required] string company, [FromQuery][Required()] string articleIds)
         {
-           if (!Companies.IsCompanyExists(company))
+            if (!Companies.IsCompanyExists(company))
             {
                 return StatusCode(400, (new ErrorInfo()
                 {
@@ -536,7 +536,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(VendorStocks), description: "")]
         public virtual async Task<IActionResult> GetVendorStocks([FromRoute][Required] string company, [FromRoute][Required] string vendorId, [FromBody] VendorStockRequest vendorStockRequest)
         {
-           if (!Companies.IsCompanyExists(company))
+            if (!Companies.IsCompanyExists(company))
             {
                 return StatusCode(400, (new ErrorInfo()
                 {
@@ -553,15 +553,15 @@ namespace IO.Swagger.Controllers
             {
                 dt.Rows.Add(vendorStockRequestItem.VendorArticleId, vendorStockRequestItem.Quantity);
             }
-            
+
             List<SqlParameter> param = new List<SqlParameter>()
             {
                 new SqlParameter("@company", company),
                 new SqlParameter("@vendorId", vendorId),
                 new SqlParameter("@branchId", vendorStockRequest.BranchId),
-                new SqlParameter("@vendorStockRequest", dt) 
-                {   
-                    TypeName = "dbo.tyVendorStockRequest"   
+                new SqlParameter("@vendorStockRequest", dt)
+                {
+                    TypeName = "dbo.tyVendorStockRequest"
                 }
             };
             VendorStocks vendorStocks = new VendorStocks();
@@ -624,7 +624,7 @@ namespace IO.Swagger.Controllers
         [SwaggerOperation("GetArticlePrices")]
         [SwaggerResponse(statusCode: 200, type: typeof(Prices), description: "")]
         public virtual async Task<IActionResult> GetArticlePrices([FromRoute][Required] string company, [FromBody] PriceRequest priceRequest)
-        {        
+        {
             if (!Companies.IsCompanyExists(company))
             {
                 return StatusCode(400, (new ErrorInfo()
@@ -834,7 +834,7 @@ namespace IO.Swagger.Controllers
         [SwaggerOperation("GetAvailabilities")]
         [SwaggerResponse(statusCode: 200, type: typeof(Availabilities), description: "")]
         public virtual async Task<IActionResult> GetAvailabilities([FromRoute][Required] string company, [FromBody] AvailabilityRequest availabilityRequest)
-        {          
+        {
             if (!Companies.IsCompanyExists(company))
             {
                 return StatusCode(400, (new ErrorInfo()
@@ -846,11 +846,20 @@ namespace IO.Swagger.Controllers
 
             DataTable dt = new DataTable();
             dt.Columns.Add("articleId", typeof(string));
-            dt.Columns.Add("quantity", typeof(double));          
+            dt.Columns.Add("quantity", typeof(double));
+            dt.Columns.Add("customerNr", typeof(string));
+            dt.Columns.Add("sendMethod", typeof(string));
+            dt.Columns.Add("partialDelivery", typeof(bool));
+            dt.Columns.Add("deliveryAddressId", typeof(string));
+            dt.Columns.Add("pickupBranchId", typeof(string));
+            dt.Columns.Add("pickingWarehouse", typeof(string));
+            dt.Columns.Add("isTourTimetable", typeof(bool));
 
             foreach (AvailabilityRequestItem availabilityRequestItem in availabilityRequest.Items)
             {
-                dt.Rows.Add(availabilityRequestItem.ArticleId, availabilityRequestItem.Quantity);
+                dt.Rows.Add(availabilityRequestItem.ArticleId, availabilityRequestItem.Quantity, availabilityRequest.CustomerNr,
+                    availabilityRequest.SendMethod, availabilityRequest.PartialDelivery, availabilityRequest.DeliveryAddressId, availabilityRequest.PickupBranchId,
+                    availabilityRequest.PickingWarehouse, availabilityRequest.IsTourTimetable);
             }
 
             List<SqlParameter> param = new List<SqlParameter>()
@@ -888,10 +897,13 @@ namespace IO.Swagger.Controllers
                                 AssignmentPriority = Convert.ToInt64(dr["assignmentPriority"]),
                                 ErrorMessage = dr["errorMessage"].ToString(),
                                 TourName = dr["tourName"].ToString(),
-                                TourTimeTable = new List<Tour>() { new Tour() {
-                                TourName = dr["tourTimeTableTourName"].ToString(),
-                                StartTime = Convert.ToDateTime(dr["tourTimeTableStartTime"]) }
-                            }
+                                TourTimeTable = new List<Tour>() { 
+                                    new Tour() 
+                                    {
+                                        TourName = dr["tourTimeTableTourName"].ToString(),
+                                        StartTime = Convert.ToDateTime(dr["tourTimeTableStartTime"])
+                                    }
+                                }
                             };
                             availabilities.Add(availability);
                         }
