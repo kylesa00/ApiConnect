@@ -346,6 +346,7 @@ namespace IO.Swagger.Controllers
                         BlockedStatus = (BlockedStatusEnum)Convert.ToInt32(ds.Tables[0].Rows[0]["blockedStatus"]),
                         BlockedReason = ds.Tables[0].Rows[0]["blockedReason"].ToString(),
                         Currency = ds.Tables[0].Rows[0]["currency"].ToString(),
+                        DirectDelivery = "No",
                         SendMethod = ds.Tables[0].Rows[0]["sendMethod"].ToString(),
                         PaymentType = ds.Tables[0].Rows[0]["paymentType"].ToString(),
                         InvoiceType = ds.Tables[0].Rows[0]["invoiceType"].ToString(),
@@ -372,9 +373,12 @@ namespace IO.Swagger.Controllers
                         SagGwsSuppressPrintOfRecommendedPrice = Convert.ToBoolean(ds.Tables[0].Rows[0]["sagGwsSuppressPrintOfRecommendedPrice"]),
                         SagPriceTypeSelectionEnabled = ds.Tables[0].Rows[0]["sagPriceTypeSelectionEnabled"].ToString(),
                         SagGwsPriceDiscDetailsForNetPricingCalcPricePresentation = ds.Tables[0].Rows[0]["sagGwsPriceDiscDetailsForNetPricingCalcPricePresentation"].ToString(),
+                        SagSingleCreditNote = "No",
                         GwsInvoiceSortCode = ds.Tables[0].Rows[0]["gwsInvoiceSortCode"].ToString(),
                         GwsDayPeriod = ds.Tables[0].Rows[0]["gwsDayPeriod"].ToString(),
                         CustCollectionLetterCode = ds.Tables[0].Rows[0]["custCollectionLetterCode"].ToString(),
+                        SagSpecialBusinessType = "None",
+                        SagSpecialBusinessCustomerNo = "",
                         GwsInvoiceAdvancedSummarySetup = ds.Tables[0].Rows[0]["gwsInvoiceAdvancedSummarySetup"].ToString(),
                         Links = links
                     };
@@ -398,6 +402,8 @@ namespace IO.Swagger.Controllers
 
                         customerGrantedBranchesForOrderings = null;
                     }
+
+                    customer.CustApprovalTypes = new List<CustApprovalTypes>();
 
                     if (ds.Tables[2].Rows.Count > 0)
                     {

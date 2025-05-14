@@ -62,6 +62,16 @@ namespace IO.Swagger.Models
         [DataMember(Name="externalArticleId")]
         public string ExternalArticleId { get; set; }
 
+
+        [DataMember(Name="ePriority")]
+        public int EPriority { get; set; }
+        
+        [DataMember(Name="directDelivery")]
+        public string DirectDelivery { get; set; }
+       
+        [DataMember(Name="stopped")]
+        public string Stopped { get; set; }
+
         /// <summary>
         /// Returns the string presentation of the object
         /// </summary>

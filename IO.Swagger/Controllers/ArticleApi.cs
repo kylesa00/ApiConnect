@@ -500,7 +500,10 @@ namespace IO.Swagger.Controllers
                             VendorName = dr["vendorName"].ToString(),
                             LeadTime = dr["leadTime"].ToString(),
                             ArticleId = dr["articleId"].ToString(),
-                            ExternalArticleId = dr["externalArticleId"].ToString()
+                            ExternalArticleId = dr["externalArticleId"].ToString(),
+                            EPriority = 9,
+                            DirectDelivery = "No",
+                            Stopped = "No"
                         };
                         articleVendors.Add(articleVendor);
                     }

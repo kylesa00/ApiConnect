@@ -153,8 +153,15 @@ namespace IO.Swagger.Models
         /// ISO code of currency for invoicing the customer.
         /// </summary>
         /// <value>ISO code of currency for invoicing the customer.</value>
+        /// 
         [DataMember(Name="currency")]
         public string Currency { get; set; }
+
+        [DataMember(Name= "directDelivery")]
+        public string DirectDelivery { get; set; }
+
+        [DataMember(Name= "defaultReturnReasonCodeId")]
+        public string DefaultReturnReasonCodeId {get; set; }
 
         /// <summary>
         /// The &#x60;sendMethod&#x60; describes, how goods are usually delivered to the customer.
@@ -376,6 +383,13 @@ namespace IO.Swagger.Models
         public string SagGwsPriceDiscDetailsForNetPricingCalcPricePresentation { get; set; }
 
         /// <summary>
+        /// sagSingleCreditNote
+        /// </summary>
+        /// <value>sagSingleCreditNote</value>
+        [DataMember(Name= "sagSingleCreditNote")]
+        public string SagSingleCreditNote { get; set; }
+
+        /// <summary>
         /// The invoice sort code
         /// </summary>
         /// <value>The invoice sort code</value>
@@ -402,6 +416,29 @@ namespace IO.Swagger.Models
         /// <value>The invoice advanced summary setup</value>
         [DataMember(Name="gwsInvoiceAdvancedSummarySetup")]
         public string GwsInvoiceAdvancedSummarySetup { get; set; }
+
+        /// <summary>
+        /// Indicates if a customer is a SmartCat customer
+        /// </summary>
+        /// <value>Indicates if a customer is a SmartCat customer</value>
+        [DataMember(Name = "sagSpecialBusinessType")]
+        public string SagSpecialBusinessType { get; set; }
+
+        /// <summary>
+        /// The special business customer number
+        /// </summary>
+        /// <value>The special business customer number</value>
+        [DataMember(Name = "sagSpecialBusinessCustomerNo")]
+        public string SagSpecialBusinessCustomerNo { get; set; }
+
+
+        /// <summary>
+        /// The certificate and the approval type name
+        /// </summary>
+        /// <value>The certificate and the approval type name</value>
+        [DataMember(Name = "custApprovalTypes")]
+        public List<CustApprovalTypes> CustApprovalTypes { get; set; }
+
 
         /// <summary>
         /// Contacts of customer.
