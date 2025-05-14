@@ -177,7 +177,7 @@ namespace IO.Swagger.Controllers
         [SwaggerOperation("GetNextWorkingDate")]   
         [SwaggerResponse(statusCode: 200, type: typeof(NextWorkingDate), description: "Successful response if next working date could be retreived in the context of the company.")]
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorInfo), description: "If the provided company name is invalid, the service responds with a 400 (Bad Request) status.")]
-        [ApiExplorerSettings(IgnoreApi = true)]
+        //[ApiExplorerSettings(IgnoreApi = true)]
         public virtual async Task<IActionResult> GetNextWorkingDate([FromRoute][Required] string company, [FromBody] NextWorkingDateRequest nextWorkingDateRequest)
         {
            if (!Companies.IsCompanyExists(company))
@@ -198,7 +198,15 @@ namespace IO.Swagger.Controllers
             Dictionary<string, LinkEntry> links;
             try
             {
-                DateTime nextWorkingDate = Convert.ToDateTime(await Dal.GetDataAsync("GetNextWorkingDate", param));
+                DataSet ds = await Dal.GetDataAsync("GetNextWorkingDate", param);
+                if (ds.Tables[0].Rows.Count == 0)
+                    return StatusCode(404, (new ErrorInfo()
+                    {
+                        ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
+                        ErrorMessage = "Next working date not found"
+                    }));
+
+                DateTime nextWorkingDate = Convert.ToDateTime(ds.Tables[0].Rows[0]["nextWorkingDate"]);
 
                 links = new Dictionary<string, LinkEntry>() {
                         { "branch", new LinkEntry(Url.Action(nameof(GetBranchById), values: new { company, branchId = nextWorkingDateRequest.BranchId })) } };
