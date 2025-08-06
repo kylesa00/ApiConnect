@@ -56,6 +56,17 @@ namespace IO.Swagger.Models
         public double? NetPrice { get; set; }
 
         /// <summary>
+        /// The net price of a single unit of the article before applying any discount. Only used if promotional price is available.
+        /// 
+        /// </summary>
+        /// <value>The net price of a single unit of the article before applying any discount.</value>
+        [DataMember(Name="net1Price")]
+        public double? Net1Price { get; set; }
+        
+        [DataMember(Name="net1PriceFound")]
+        public bool? Net1PriceFound { get; set; }
+
+        /// <summary>
         /// The discount for a single unit of the article.
         /// </summary>
         /// <value>The discount for a single unit of the article.</value>
@@ -75,6 +86,13 @@ namespace IO.Swagger.Models
         /// <value>The total net price for the total number of unit of the requested article before applying any discount.</value>
         [DataMember(Name="totalNetPrice")]
         public double? TotalNetPrice { get; set; }
+
+        /// <summary>
+        /// The total net price for the total number of unit of the requested article before applying any discount.
+        /// </summary>
+        /// <value>The total net price for the total number of unit of the requested article before applying any discount.</value>
+        [DataMember(Name = "totalNet1Price")]
+        public double? TotalNet1Price { get; set; }
 
         /// <summary>
         /// The total discount amount for requested articles.
