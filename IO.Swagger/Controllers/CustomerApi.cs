@@ -505,6 +505,80 @@ namespace IO.Swagger.Controllers
             }
         }
 
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <remarks>Retrieves tours along with accompanying information by company and optionally customerNr</remarks>
+        /// <param name="company">The company to which the webshop belongs, e.g. &#39;Derendinger-Switzerland&#39;.</param>
+        /// <param name="customerNr">Number of the customer resource.</param>
+        /// <response code="200">Successful response provides the requested tours.</response>
+        /// <response code="400">If the provided company name is invalid, the service responds with a 400 (Bad Request) status.</response>
+        /// <response code="404">If customer or address does not exist for given company, the request responds a 404 (NotFound) status. </response>
+        [HttpGet]
+        [Route("/apps/prod-webshop-service-app/webshop-service/customers/{company}/tours")]
+        [ValidateModelState]
+        [SwaggerOperation("GetTours")]
+        [SwaggerResponse(statusCode: 200, type: typeof(CustomerTours), description: "Successful response provides the requested customer tours.")]                              
+        [SwaggerResponse(statusCode: 400, type: typeof(ErrorInfo), description: "If the provided company name is invalid, the service responds with a 400 (Bad Request) status.")]
+        [SwaggerResponse(statusCode: 404, type: typeof(ErrorInfo), description: "If customer or address does not exist for given company, the request responds a 404 (NotFound) status.")]
+        public virtual async Task<IActionResult> GetTours([FromRoute][Required] string company, [FromQuery] string customerNr)
+        {
+            if (!Companies.IsCompanyExists(company))
+            {
+                return StatusCode(400, (new ErrorInfo()
+                {
+                    ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
+                    ErrorMessage = "Company not found"
+                }));
+            }
+
+            List<SqlParameter> param = new List<SqlParameter>()
+            {
+                new SqlParameter("@company", company),
+                new SqlParameter("@customerNr", (object)customerNr ?? DBNull.Value)
+            };
+            List<CustomerTour> customerTours = new List<CustomerTour>();
+
+            try
+            {
+                DataSet ds = await Dal.GetDataAsync("GetCustomerTours", param);
+
+                if (ds.Tables[0].Rows.Count > 0)
+                {
+                    foreach (DataRow dr in ds.Tables[0].Rows)
+                    {
+                        CustomerTour tour = new CustomerTour()
+                        {
+                            CustomerNumber = dr["customerNumber"].ToString(),
+                            BranchId = dr["branchId"].ToString(),
+                            CustomerTourName = dr["tourName"].ToString(),
+                            CutOffMinutes = Convert.ToInt32(dr["cutOffMinutes"]),
+                            TourDays = dr["tourDays"].ToString(),
+                            TourDepartureTime = dr["tourDepartureTime"].ToString(),
+                            SpecialUse = dr["specialUse"] == DBNull.Value ? null : dr["specialUse"].ToString(),
+                            LocationId = dr["locationId"] == DBNull.Value ? null : dr["locationId"].ToString()
+                        };
+                        customerTours.Add(tour);
+                    }
+                    return new ObjectResult(new CustomerTours() { Tours = customerTours });
+                }
+                else
+                {
+                    return StatusCode(404, (new ErrorInfo()
+                    {
+                        ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
+                        ErrorMessage = "No customer tours found"
+                    }));
+                }
+            }
+            finally
+            {
+                param = null;
+                customerTours = null;
+            }
+        }
+
         /// <summary>
         /// 
         /// </summary>
