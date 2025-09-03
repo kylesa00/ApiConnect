@@ -896,6 +896,7 @@ namespace IO.Swagger.Controllers
                                 BackOrder = Convert.ToBoolean(dr["backOrder"]),
                                 CutOffTime = Convert.ToDateTime(dr["cutOffTime"]),
                                 DeliveryTime = Convert.ToDateTime(dr["deliveryTime"]),
+                                DeliveryTime2 = Convert.ToDateTime(dr["deliveryTime"]),
                                 ImmediateDelivery = Convert.ToBoolean(dr["immediateDelivery"]),
                                 StockWarehouse = dr["stockWarehouse"].ToString(),
                                 DeliveryWarehouse = dr["deliveryWarehouse"].ToString(),

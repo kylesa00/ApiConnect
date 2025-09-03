@@ -63,6 +63,13 @@ namespace IO.Swagger.Models
         public DateTime? DeliveryTime { get; set; }
 
         /// <summary>
+        /// Delivery Time 
+        /// </summary>
+        /// <value>Delivery Time</value>
+        [DataMember(Name= "deliveryTime")]
+        public DateTime? DeliveryTime2 { get; set; }
+
+        /// <summary>
         /// Available now!
         /// </summary>
         /// <value>Available now!</value>
