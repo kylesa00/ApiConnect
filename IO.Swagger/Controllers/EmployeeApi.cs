@@ -79,6 +79,7 @@ namespace IO.Swagger.Controllers
                         if (string.IsNullOrEmpty(employee.PersonalNumber))
                         {
                             Dictionary<string, LinkEntry> links = new Dictionary<string, LinkEntry>() {{"self", new LinkEntry(Request.Path.ToString()) }};
+                            links = UrlTool.ParseLinks(links);
                             employee = new Employee()
                             {
                                 PersonalNumber = dr["personalNr"].ToString(),
@@ -164,6 +165,7 @@ namespace IO.Swagger.Controllers
                 new SqlParameter("@emailAddress", (object)emailAddress ?? DBNull.Value)
             };
             Dictionary<string, LinkEntry> links = new Dictionary<string, LinkEntry>() { { "self", new LinkEntry(Request.Path.ToString() + Request.QueryString.ToString()) } };
+            links = UrlTool.ParseLinks(links);
 
             try
             {
@@ -176,6 +178,7 @@ namespace IO.Swagger.Controllers
                         {
                             Dictionary<string, LinkEntry> link = new Dictionary<string, LinkEntry>() {
                                 { "self", new LinkEntry(Url.Action(nameof(GetEmployeeByNr), values: new { company, personalNr = dr["personalNr"].ToString() })) }};
+                            link = UrlTool.ParseLinks(link);
                             employee = new Employee()
                             {
                                 PersonalNumber = dr["personalNr"].ToString(),

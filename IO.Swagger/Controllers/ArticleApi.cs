@@ -70,6 +70,7 @@ namespace IO.Swagger.Controllers
                 new SqlParameter("@acceptLanguage", (object)acceptLanguage ?? DBNull.Value)
             };
             Dictionary<string, LinkEntry> links = new Dictionary<string, LinkEntry>() { { "self", new LinkEntry(Request.Path.ToString() + Request.QueryString.ToString()) } };
+            links = UrlTool.ParseLinks(links);
             try
             {
                 DataSet ds = await Dal.GetDataAsync("GetArticles", param);
@@ -82,6 +83,7 @@ namespace IO.Swagger.Controllers
                                 { "self", new LinkEntry(Url.Action(nameof(GetArticleById), values: new { company, articleId = dr["id"].ToString(), acceptLanguage})) },
                                 { "collection/stock", new LinkEntry(Url.Action(nameof(GetArticlesStocks), values: new { company, articleId = dr["id"].ToString() })) }
                             };
+                        link = UrlTool.ParseLinks(link);
                         Article article = new Article()
                         {
                             Id = dr["id"].ToString(),
@@ -169,6 +171,7 @@ namespace IO.Swagger.Controllers
                     links = new Dictionary<string, LinkEntry>() {
                         { "self", new LinkEntry(Request.Path.ToString())},
                         { "collection/stock", new LinkEntry(Url.Action(nameof(GetArticlesStocks), values: new { company, articleId = ds.Tables[0].Rows[0]["id"].ToString() })) } };
+                    links = UrlTool.ParseLinks(links);
                     article = new Article()
                     {
                         Id = ds.Tables[0].Rows[0]["id"].ToString(),
@@ -236,6 +239,7 @@ namespace IO.Swagger.Controllers
                 new SqlParameter("@branchId", (object)branchId ?? DBNull.Value)
             };
             Dictionary<string, LinkEntry> links = new Dictionary<string, LinkEntry>() { { "self", new LinkEntry(Request.Path.ToString() + Request.QueryString.ToString()) } };
+            links = UrlTool.ParseLinks(links);
 
             try
             {
@@ -246,6 +250,7 @@ namespace IO.Swagger.Controllers
                     {
                         Dictionary<string, LinkEntry> link = new Dictionary<string, LinkEntry>() {
                             { "self", new LinkEntry(Url.Action(nameof(GetArticleById), values: new { company, articleId = dr["articleId"].ToString()}))} };
+                        link = UrlTool.ParseLinks(link);
                         ArticleStockInfo articleStock = new ArticleStockInfo()
                         {
                             ArticleId = dr["articleId"].ToString(),
@@ -336,6 +341,7 @@ namespace IO.Swagger.Controllers
                 new SqlParameter("@branchId", (object)branchId ?? DBNull.Value)
             };
             Dictionary<string, LinkEntry> links = new Dictionary<string, LinkEntry>() { { "self", new LinkEntry(Request.Path.ToString() + Request.QueryString.ToString()) } };
+            links = UrlTool.ParseLinks(links);
             try
             {
                 DataSet ds = await Dal.GetDataAsync("GetArticleStockById", param);
@@ -345,6 +351,7 @@ namespace IO.Swagger.Controllers
                     {
                         Dictionary<string, LinkEntry> link = new Dictionary<string, LinkEntry>() {
                             { "self", new LinkEntry(Url.Action(nameof(GetArticleById), values: new { company, articleId }))}};
+                        link = UrlTool.ParseLinks(link);
                         ArticleStockInfo articleStock = new ArticleStockInfo()
                         {
                             ArticleId = articleId,
@@ -412,6 +419,7 @@ namespace IO.Swagger.Controllers
                 new SqlParameter("@articleIds", articleIds)
             };
             Dictionary<string, LinkEntry> links = new Dictionary<string, LinkEntry>() { { "self", new LinkEntry(Request.Path.ToString() + Request.QueryString.ToString()) } };
+            links = UrlTool.ParseLinks(links);
             try
             {
                 DataSet ds = await Dal.GetDataAsync("GetArticleStocksSum", param);
@@ -421,6 +429,7 @@ namespace IO.Swagger.Controllers
                     {
                         Dictionary<string, LinkEntry> link = new Dictionary<string, LinkEntry>() {
                                 { "self", new LinkEntry(Url.Action(nameof(GetArticleById), values: new { company, articleId = dr["articleId"].ToString()}))} };
+                        link = UrlTool.ParseLinks(link);
                         ArticleStockSumInfo articleStockSumInfo = new ArticleStockSumInfo()
                         {
 

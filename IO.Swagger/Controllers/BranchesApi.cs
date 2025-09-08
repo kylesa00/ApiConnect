@@ -67,6 +67,8 @@ namespace IO.Swagger.Controllers
             };
             Branch branch;
             Dictionary<string, LinkEntry> links = new Dictionary<string, LinkEntry>() { {"self", new LinkEntry(Request.Path.ToString()) }};
+            links = UrlTool.ParseLinks(links);
+
             try
             {
                 DataSet ds = await Dal.GetDataAsync("GetBranchById", param);
@@ -136,6 +138,7 @@ namespace IO.Swagger.Controllers
                         links = new Dictionary<string, LinkEntry>() {
                             { "self", new LinkEntry(Url.Action(nameof(GetBranchById), values: new { company, branchId = dr["branchId"].ToString() })) }
                         };
+                        links = UrlTool.ParseLinks(links);
                         Branch branch = new Branch()
                         {
                             BranchId = dr["branchId"].ToString(),
@@ -146,7 +149,8 @@ namespace IO.Swagger.Controllers
 
                         branches.Add(branch);
                     }
-                    return new ObjectResult(new Branches() { _Branches = branches, Links = new Dictionary<string, LinkEntry>() { { "self", new LinkEntry(Request.Path.ToString()) } } });
+                    var link = new Dictionary<string, LinkEntry>() { { "self", new LinkEntry(Request.Path.ToString()) } };
+                    return new ObjectResult(new Branches() { _Branches = branches, Links =  UrlTool.ParseLinks(link)});
                 }
                 else
                     return StatusCode(404, (new ErrorInfo()
@@ -210,6 +214,7 @@ namespace IO.Swagger.Controllers
 
                 links = new Dictionary<string, LinkEntry>() {
                         { "branch", new LinkEntry(Url.Action(nameof(GetBranchById), values: new { company, branchId = nextWorkingDateRequest.BranchId })) } };
+                links = UrlTool.ParseLinks(links);
                 return new ObjectResult(new NextWorkingDate()
                 {
                     _NextWorkingDate = nextWorkingDate,

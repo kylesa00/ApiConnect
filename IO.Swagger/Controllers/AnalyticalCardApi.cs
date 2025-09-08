@@ -144,7 +144,6 @@ namespace IO.Swagger.Controllers
             Dictionary<string, LinkEntry> links = new Dictionary<string, LinkEntry>() {
                         { "self", new LinkEntry(Request.Path.ToString() + Request.QueryString.ToString()) } };
 
-
             try
             {
                 DataSet ds = await Dal.GetDataAsync("GetAnalyticalCard_Entries", param);
@@ -201,6 +200,8 @@ namespace IO.Swagger.Controllers
                                                     ? ds.Tables[1].Rows[0]["LastPageNumber"].ToString()
                                                     : "1");
                     links.Add("last", new LinkEntry(Request.Path.ToString() + QueryString.Create(queryString4Last).ToString()));
+                    
+                    links = UrlTool.ParseLinks(links);
 
                     return new ObjectResult(new Documents() { _Documents = documents, Links = links });
                 }
@@ -337,6 +338,7 @@ namespace IO.Swagger.Controllers
                                                     : "1");
                     links.Add("last", new LinkEntry(Request.Path.ToString() + QueryString.Create(queryString4Last).ToString()));
 
+                    links = UrlTool.ParseLinks(links);
 
                     entry.Links = links;
 

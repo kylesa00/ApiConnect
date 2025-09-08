@@ -86,6 +86,8 @@ namespace IO.Swagger.Controllers
                     {
                         Dictionary<string, LinkEntry> link = new Dictionary<string, LinkEntry>()
                             {{"collection/positions", new LinkEntry(Url.Action(nameof(GetOrderPositions), values: new { company, customerNr, orderNr = dr["nr"].ToString()})) } };
+                        link = UrlTool.ParseLinks(link);
+
                         Order order = new Order()
                         {
                             Nr = dr["nr"].ToString(),
@@ -125,6 +127,7 @@ namespace IO.Swagger.Controllers
                         queryString.Add("page", ds.Tables[1].Rows[0]["NextPageNumber"].ToString());
                         links.Add("next", new LinkEntry(Request.Path.ToString() + QueryString.Create(queryString).ToString()));
                     }
+                    links = UrlTool.ParseLinks(links);
 
                     return new ObjectResult(new Orders() { _Orders = orders, Links = links });
                 }
@@ -266,6 +269,7 @@ namespace IO.Swagger.Controllers
                         { "self", new LinkEntry(Request.Path.ToString()) },
                         { "article", new LinkEntry(Url.Action(nameof(ArticleApiController.GetArticleById), "ArticleApi", values: new { company, articleId = ds.Tables[0].Rows[0]["articleId"].ToString()})) }
                      };
+                    link = UrlTool.ParseLinks(link);
                     orderPosition = new OrderPosition()
                     {
                         Sequence = Convert.ToInt64(ds.Tables[0].Rows[0]["sequence"]),
@@ -378,6 +382,7 @@ namespace IO.Swagger.Controllers
                         queryString.Add("page", ds.Tables[1].Rows[0]["NextPageNumber"].ToString());
                         links.Add("next", new LinkEntry(Request.Path.ToString() + QueryString.Create(queryString).ToString()));
                     }
+                    links = UrlTool.ParseLinks(links);
 
                     return new ObjectResult(new OrderPositions() { _OrderPositions = orderPositions, Links = links });
                 }
@@ -771,6 +776,7 @@ namespace IO.Swagger.Controllers
             {
                 List<Availability> availabilities = new List<Availability>();
                 Dictionary<string, LinkEntry> link = new Dictionary<string, LinkEntry> { { "self", new LinkEntry(Request.Path.ToString()) } };
+                link = UrlTool.ParseLinks(link);
 
                 foreach (NavWebServiceReference.availabilities navAvailailitie in navResponse.OrderConfirmationConnectWebSalesHeader[0].availabilities)
                 {                   
@@ -907,6 +913,7 @@ namespace IO.Swagger.Controllers
             OrderConfirmation orderConfirmation = new OrderConfirmation();
             Dictionary<string, LinkEntry> links = new Dictionary<string, LinkEntry>() {
                                 {"self", new LinkEntry(Request.Path.ToString()) } };
+            links = UrlTool.ParseLinks(links);
             try
             {
                 DataSet ds = await Dal.GetDataAsync("CreateShoppingBasket", param);

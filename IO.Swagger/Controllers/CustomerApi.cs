@@ -91,6 +91,9 @@ namespace IO.Swagger.Controllers
                         { "self", new LinkEntry(Url.Action(nameof(GetAddressById), values: new { company, customerNr, addressId})) },
                         { "next-tour", new LinkEntry(Request.Path.ToString()) } //#todo jos ne znam koji endpoint treba da pozovem
                     };
+
+                    links = UrlTool.ParseLinks(links);
+
                     address = new Address()
                     {
                         Id = ds.Tables[0].Rows[0]["addressId"].ToString(),
@@ -172,6 +175,7 @@ namespace IO.Swagger.Controllers
                 new SqlParameter("@description",  (object)description ?? DBNull.Value)
             };
             Dictionary<string, LinkEntry> links = new Dictionary<string, LinkEntry>() { { "self", new LinkEntry(Request.Path.ToString() + Request.QueryString.ToString()) } };
+            links = UrlTool.ParseLinks(links);
             try
             {
                 DataSet ds = await Dal.GetDataAsync("GetAddressesOfCustomer", param);
@@ -184,6 +188,7 @@ namespace IO.Swagger.Controllers
                             { "self", new LinkEntry(Url.Action(nameof(GetAddressById), values: new { company, customerNr = customerNr, addressId = dr["id"].ToString()})) },
                             { "next-tour", new LinkEntry(Request.Path.ToString()) } //#todo jos ne znam koji endpoint treba da pozovem
                         };
+                        link = UrlTool.ParseLinks(link);
                         Address address = new Address()
                         {
                             Id = dr["id"].ToString(),
@@ -334,6 +339,7 @@ namespace IO.Swagger.Controllers
                                 {"collection/invoices", new LinkEntry(Url.Action(nameof(InvoicesApiController.GetInvoices), "InvoicesApi" , values: new{ company, customerNr }))},
                                 {"collection/creditlimit", new LinkEntry(Url.Action(nameof(GetCreditLimit), values: new{ company, customerNr}))}
                             };
+                    links = UrlTool.ParseLinks(links);
                     customer = new Customer()
                     {
                         Nr = ds.Tables[0].Rows[0]["customerNr"].ToString(),
@@ -535,7 +541,6 @@ namespace IO.Swagger.Controllers
 
             List<SqlParameter> param = new List<SqlParameter>()
             {
-                new SqlParameter("@company", company),
                 new SqlParameter("@customerNr", (object)customerNr ?? DBNull.Value)
             };
             List<CustomerTour> customerTours = new List<CustomerTour>();
@@ -550,7 +555,7 @@ namespace IO.Swagger.Controllers
                     {
                         CustomerTour tour = new CustomerTour()
                         {
-                            CustomerNumber = dr["customerNumber"].ToString(),
+                            CustomerNumber = dr["customerNo"].ToString(),
                             BranchId = dr["branchId"].ToString(),
                             CustomerTourName = dr["tourName"].ToString(),
                             CutOffMinutes = Convert.ToInt32(dr["cutOffMinutes"]),
