@@ -896,41 +896,68 @@ namespace IO.Swagger.Controllers
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
                     {
-                        if (!availabilities.Any(e => e.ArticleId == dr["articleId"].ToString()))
+                        try
                         {
                             availability = new Availability()
                             {
-                                ArticleId = dr["articleId"].ToString(),
-                                Quantity = Convert.ToDouble(dr["quantity"]),
-                                BackOrder = Convert.ToBoolean(dr["backOrder"]),
-                                CutOffTime = Convert.ToDateTime(dr["cutOffTime"]),
-                                DeliveryTime = Convert.ToDateTime(dr["deliveryTime"]),
-                                DeliveryTime2 = Convert.ToDateTime(dr["deliveryTime"]),
-                                ImmediateDelivery = Convert.ToBoolean(dr["immediateDelivery"]),
-                                StockWarehouse = dr["stockWarehouse"].ToString(),
-                                DeliveryWarehouse = dr["deliveryWarehouse"].ToString(),
-                                SendMethod = dr["sendMethod"].ToString(),
-                                AssignmentPriority = Convert.ToInt64(dr["assignmentPriority"]),
-                                ErrorMessage = dr["errorMessage"].ToString(),
-                                TourName = dr["tourName"].ToString(),
-                                TourTimeTable = new List<Tour>() { 
-                                    new Tour() 
+                                ArticleId = dr["articleId"] == DBNull.Value ? null : dr["articleId"].ToString(),
+                                Quantity = dr["quantity"] == DBNull.Value ? (double?)null : Convert.ToDouble(dr["quantity"]),
+                                BackOrder = dr["backOrder"] == DBNull.Value ? (bool?)null : Convert.ToBoolean(dr["backOrder"]),
+                                CutOffTime = dr["cutOffTime"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["cutOffTime"]),
+                                DeliveryTime = dr["deliveryTime"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["deliveryTime"]),
+                                DeliveryTime2 = dr["deliveryTime"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["deliveryTime"]),
+                                ImmediateDelivery = dr["immediateDelivery"] == DBNull.Value ? (bool?)null : Convert.ToBoolean(dr["immediateDelivery"]),
+                                StockWarehouse = dr["stockWarehouse"] == DBNull.Value ? null : dr["stockWarehouse"].ToString(),
+                                DeliveryWarehouse = dr["deliveryWarehouse"] == DBNull.Value ? null : dr["deliveryWarehouse"].ToString(),
+                                SendMethod = dr["sendMethod"] == DBNull.Value ? null : dr["sendMethod"].ToString(),
+                                AssignmentPriority = dr["assignmentPriority"] == DBNull.Value ? (long?)null : Convert.ToInt64(dr["assignmentPriority"]),
+                                ErrorMessage = dr["errorMessage"] == DBNull.Value ? null : dr["errorMessage"].ToString(),
+                                TourName = dr["tourName"] == DBNull.Value ? null : dr["tourName"].ToString(),
+                                TourTimeTable = new List<Tour>()
+                                {
+                                    new Tour()
                                     {
-                                        TourName = dr["tourTimeTableTourName"].ToString(),
-                                        StartTime = Convert.ToDateTime(dr["tourTimeTableStartTime"])
+                                        TourName = dr["tourTimeTableTourName"] == DBNull.Value ? null : dr["tourTimeTableTourName"].ToString(),
+                                        StartTime = dr["tourTimeTableStartTime"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["tourTimeTableStartTime"])
                                     }
                                 }
                             };
                             availabilities.Add(availability);
                         }
-                        else
+                        //try
+                        //{
+                        //    availability = new Availability()
+                        //    {
+                        //        ArticleId = dr["articleId"].ToString(),
+                        //        Quantity = Convert.ToDouble(dr["quantity"]),
+                        //        BackOrder = Convert.ToBoolean(dr["backOrder"]),
+                        //        CutOffTime = Convert.ToDateTime(dr["cutOffTime"]),
+                        //        DeliveryTime = Convert.ToDateTime(dr["deliveryTime"]),
+                        //        DeliveryTime2 = Convert.ToDateTime(dr["deliveryTime"]),
+                        //        ImmediateDelivery = Convert.ToBoolean(dr["immediateDelivery"]),
+                        //        StockWarehouse = dr["stockWarehouse"].ToString(),
+                        //        DeliveryWarehouse = dr["deliveryWarehouse"].ToString(),
+                        //        SendMethod = dr["sendMethod"].ToString(),
+                        //        AssignmentPriority = Convert.ToInt64(dr["assignmentPriority"]),
+                        //        ErrorMessage = dr["errorMessage"].ToString(),
+                        //        TourName = dr["tourName"].ToString(),
+                        //        TourTimeTable = new List<Tour>() {
+                        //            new Tour()
+                        //            {
+                        //                TourName = dr["tourTimeTableTourName"].ToString(),
+                        //                StartTime = Convert.ToDateTime(dr["tourTimeTableStartTime"])
+                        //            }
+                        //        }
+                        //    };
+                        //    availabilities.Add(availability);
+                        //}
+                        catch (Exception e)
                         {
-                            availabilities.Find(e => e.ArticleId == availability.ArticleId).TourTimeTable.Add(new Tour()
-                            {
-                                TourName = dr["tourTimeTableTourName"].ToString(),
-                                StartTime = Convert.ToDateTime(dr["tourTimeTableStartTime"])
-                            });
+                            var error = e.Message;
+                            throw;
                         }
+
+                        
                     }
                     return new ObjectResult(new Availabilities() { _Availabilities = availabilities });
                 }

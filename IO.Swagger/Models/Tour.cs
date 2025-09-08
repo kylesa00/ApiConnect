@@ -33,7 +33,7 @@ namespace IO.Swagger.Models
         /// <value>A string of format X_Y_Z where X is the starting point of the tour, Y is the Description (tour number), Z is the time(HH:mm).</value>
         [Required]
         [DataMember(Name="tourName")]
-        public string TourName { get; set; }
+        public string? TourName { get; set; }
 
         /// <summary>
         /// Point in time when tour starts at distribution center. +  +  **Note 1**: This isn&#39;t the point in time when customer&#39;s delivery address is reached, because that time is actually not predictable.

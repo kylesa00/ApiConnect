@@ -80,20 +80,20 @@ namespace IO.Swagger.Models
         /// Gets or Sets StockWarehouse
         /// </summary>
         [DataMember(Name="stockWarehouse")]
-        public string StockWarehouse { get; set; }
+        public string? StockWarehouse { get; set; }
 
         /// <summary>
         /// Gets or Sets DeliveryWarehouse
         /// </summary>
         [DataMember(Name="deliveryWarehouse")]
-        public string DeliveryWarehouse { get; set; }
+        public string? DeliveryWarehouse { get; set; }
 
         /// <summary>
         /// Send method denotes how goods are usually delivered to the customer.
         /// </summary>
         /// <value>Send method denotes how goods are usually delivered to the customer.</value>
         [DataMember(Name="sendMethod")]
-        public string SendMethod { get; set; }
+        public string? SendMethod { get; set; }
 
         /// <summary>
         /// Assignment priority of split line - - filled only in split lines
@@ -107,14 +107,14 @@ namespace IO.Swagger.Models
         /// </summary>
         /// <value>Message in case we have error response from ERP.</value>
         [DataMember(Name="errorMessage")]
-        public string ErrorMessage { get; set; }
+        public string? ErrorMessage { get; set; }
 
         /// <summary>
         /// A string of format X_Y_Z where X is the starting point of the tour, Y is the Description (tour number), Z is the time(HH:mm) 
         /// </summary>
         /// <value>A string of format X_Y_Z where X is the starting point of the tour, Y is the Description (tour number), Z is the time(HH:mm) </value>
         [DataMember(Name="tourName")]
-        public string TourName { get; set; }
+        public string? TourName { get; set; }
 
         /// <summary>
         /// A list of Tours from the current querying date and time until the current querying time of the next working day
