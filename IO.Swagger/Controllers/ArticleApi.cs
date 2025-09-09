@@ -16,7 +16,6 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using IO.Swagger.Attributes;
-
 using Microsoft.AspNetCore.Authorization;
 using IO.Swagger.Models;
 using System.Data.SqlClient;
@@ -821,7 +820,7 @@ namespace IO.Swagger.Controllers
                     return new ObjectResult(new PricesForExternalOrdering() { _Prices = prices });
                 }
                 else
-                    return StatusCode(404, (new ErrorInfo()
+                    return StatusCode(400, (new ErrorInfo()
                     {
                         ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
                         ErrorMessage = "Articles not found"
@@ -924,45 +923,18 @@ namespace IO.Swagger.Controllers
                             };
                             availabilities.Add(availability);
                         }
-                        //try
-                        //{
-                        //    availability = new Availability()
-                        //    {
-                        //        ArticleId = dr["articleId"].ToString(),
-                        //        Quantity = Convert.ToDouble(dr["quantity"]),
-                        //        BackOrder = Convert.ToBoolean(dr["backOrder"]),
-                        //        CutOffTime = Convert.ToDateTime(dr["cutOffTime"]),
-                        //        DeliveryTime = Convert.ToDateTime(dr["deliveryTime"]),
-                        //        DeliveryTime2 = Convert.ToDateTime(dr["deliveryTime"]),
-                        //        ImmediateDelivery = Convert.ToBoolean(dr["immediateDelivery"]),
-                        //        StockWarehouse = dr["stockWarehouse"].ToString(),
-                        //        DeliveryWarehouse = dr["deliveryWarehouse"].ToString(),
-                        //        SendMethod = dr["sendMethod"].ToString(),
-                        //        AssignmentPriority = Convert.ToInt64(dr["assignmentPriority"]),
-                        //        ErrorMessage = dr["errorMessage"].ToString(),
-                        //        TourName = dr["tourName"].ToString(),
-                        //        TourTimeTable = new List<Tour>() {
-                        //            new Tour()
-                        //            {
-                        //                TourName = dr["tourTimeTableTourName"].ToString(),
-                        //                StartTime = Convert.ToDateTime(dr["tourTimeTableStartTime"])
-                        //            }
-                        //        }
-                        //    };
-                        //    availabilities.Add(availability);
-                        //}
                         catch (Exception e)
                         {
                             var error = e.Message;
                             throw;
                         }
 
-                        
+
                     }
                     return new ObjectResult(new Availabilities() { _Availabilities = availabilities });
                 }
                 else
-                    return StatusCode(404, (new ErrorInfo()
+                    return StatusCode(400, (new ErrorInfo()
                     {
                         ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
                         ErrorMessage = "Articles not found"
