@@ -101,7 +101,7 @@ namespace IO.Swagger.Models
         /// Boolean indicator for primary address.
         /// </summary>
         /// <value>Boolean indicator for primary address.</value>
-        [DataMember(Name="primary")]
+        [DataMember(Name= "defaultDelivery")]
         public bool? Primary { get; set; }
 
         /// <summary>
