@@ -399,7 +399,7 @@ namespace IO.Swagger.Controllers
                                 BranchId = dr["branchId"].ToString(),
                                 OrderingPriority = Convert.ToInt32(dr["OrderingPriority"]),
                                 PaymentMethodAllowed = (CustomerGrantedBranchesForOrdering.PaymentMethodAllowedEnum)Convert.ToInt32(dr["PaymentMethodAllowed"]),
-                                ExternalOrderingLocationType = dr["externalOrderingLocationType"].ToString() == "0" ? string.Empty : "Autonet"
+                                ExternalOrderingLocationType = dr["externalOrderingLocationType"].ToString() 
                             };
 
                             customerGrantedBranchesForOrderings.Add(customerGrantedBranchesForOrdering);
