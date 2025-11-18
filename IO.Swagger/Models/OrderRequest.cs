@@ -20,19 +20,19 @@ using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
 namespace IO.Swagger.Models
-{ 
+{
     /// <summary>
     /// 
     /// </summary>
     [DataContract]
     public partial class OrderRequest : IEquatable<OrderRequest>
-    { 
+    {
         /// <summary>
         /// The number of the ordering customer
         /// </summary>
         /// <value>The number of the ordering customer</value>
         [Required]
-        [DataMember(Name="customerNr")]
+        [DataMember(Name = "customerNr")]
         public string CustomerNr { get; set; }
 
         /// <summary>
@@ -55,14 +55,14 @@ namespace IO.Swagger.Models
         /// </summary>
         /// <value>Method of delivering ordered goods</value>
         [Required]
-        [DataMember(Name="sendMethod")]
+        [DataMember(Name = "sendMethod")]
         public string SendMethod { get; set; }
 
         /// <summary>
         /// Flag indicating the desire of &#x60;orderItem&#x60;s being delivered separately, in case they have different&#x60;arrivalTime&#x60;.
         /// </summary>
         /// <value>Flag indicating the desire of &#x60;orderItem&#x60;s being delivered separately, in case they have different&#x60;arrivalTime&#x60;.</value>
-        [DataMember(Name="partialDelivery")]
+        [DataMember(Name = "partialDelivery")]
         public bool? PartialDelivery { get; set; }
 
         /// <summary>
@@ -72,25 +72,25 @@ namespace IO.Swagger.Models
         [JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public enum PaymentMethodEnum
         {
-            
+
             /// <summary>
             /// Enum CASHEnum for CASH
             /// </summary>
             [EnumMember(Value = "CASH")]
             CASHEnum = 1,
-            
+
             /// <summary>
             /// Enum CARDEnum for CARD
             /// </summary>
             [EnumMember(Value = "CARD")]
             CARDEnum = 2,
-            
+
             /// <summary>
             /// Enum DIRECTINVOICEEnum for DIRECTINVOICE
             /// </summary>
             [EnumMember(Value = "DIRECTINVOICE")]
             DIRECTINVOICEEnum = 3,
-            
+
             /// <summary>
             /// Enum RECHNUNGEnum for RECHNUNG
             /// </summary>
@@ -103,68 +103,83 @@ namespace IO.Swagger.Models
         /// </summary>
         /// <value>Code for paying ordered goods</value>
         [Required]
-        [DataMember(Name="paymentMethod")]
+        [DataMember(Name = "paymentMethod")]
         public PaymentMethodEnum? PaymentMethod { get; set; }
 
         /// <summary>
         /// The id of the address where the &#x60;orderItems&#x60; will be delivered to.
         /// </summary>
         /// <value>The id of the address where the &#x60;orderItems&#x60; will be delivered to.</value>
-        [DataMember(Name="deliveryAddressId")]
+        [DataMember(Name = "deliveryAddressId")]
         public string DeliveryAddressId { get; set; }
 
         /// <summary>
         /// The id of the store where the customer will pick up the articles from, in case &#x60;sendMethod&#x60; is PICKUP. For PICKUP with no branchId, the default of customer will be used.
         /// </summary>
         /// <value>The id of the store where the customer will pick up the articles from, in case &#x60;sendMethod&#x60; is PICKUP. For PICKUP with no branchId, the default of customer will be used.</value>
-        [DataMember(Name="pickupBranchId")]
+        [DataMember(Name = "pickupBranchId")]
         public string PickupBranchId { get; set; }
+
+        /// <summary>
+        /// Name of the tour for the order
+        /// </summary>
+        /// <value>Name of the tour for the order</value>
+        [DataMember(Name = "tourName")]
+        public string TourName { get; set; }
+
+        /// <summary>
+        /// The id of the branch where the order will be delivered to.
+        /// </summary>
+        /// <value>The id of the branch where the order will be delivered to.</value>
+        [DataMember(Name = "deliveryBranchId")]
+        public string DeliveryBranchId { get; set; }
+
 
         /// <summary>
         /// Reference text for the header of the order which will be used in all documents e.g. invoice.
         /// </summary>
         /// <value>Reference text for the header of the order which will be used in all documents e.g. invoice.</value>
-        [DataMember(Name="customerRefText")]
+        [DataMember(Name = "customerRefText")]
         public string CustomerRefText { get; set; }
 
         /// <summary>
         /// Message to a real-person processor of the order. If a message is placed, the order cannot be created until a seller handles it manually.
         /// </summary>
         /// <value>Message to a real-person processor of the order. If a message is placed, the order cannot be created until a seller handles it manually.</value>
-        [DataMember(Name="message")]
+        [DataMember(Name = "message")]
         public string Message { get; set; }
 
         /// <summary>
         /// Gets or Sets SingleInvoice
         /// </summary>
-        [DataMember(Name="singleInvoice")]
+        [DataMember(Name = "singleInvoice")]
         public bool? SingleInvoice { get; set; }
 
         /// <summary>
         /// Gets or Sets CompleteInvoice
         /// </summary>
-        [DataMember(Name="completeInvoice")]
+        [DataMember(Name = "completeInvoice")]
         public bool? CompleteInvoice { get; set; }
 
         /// <summary>
         /// Employee personal number
         /// </summary>
         /// <value>Employee personal number</value>
-        [DataMember(Name="personalNumber")]
+        [DataMember(Name = "personalNumber")]
         public string PersonalNumber { get; set; }
 
         /// <summary>
         /// The sales origin
         /// </summary>
         /// <value>The sales origin</value>
-        [DataMember(Name="salesOrigin")]
+        [DataMember(Name = "salesOrigin")]
         public string SalesOrigin { get; set; }
 
         /// <summary>
         /// The id of the sales order category
         /// </summary>
         /// <value>The id of the sales order category</value>
-        [DataMember(Name="orderType")]
+        [DataMember(Name = "orderType")]
         public string OrderType { get; set; }
 
         /// <summary>
@@ -186,7 +201,7 @@ namespace IO.Swagger.Models
         /// </summary>
         /// <value>List of items that are requested to be ordered.</value>
         [Required]
-        [DataMember(Name="items")]
+        [DataMember(Name = "items")]
         public List<OrderRequestItem> Items { get; set; }
 
         /// <summary>
@@ -203,6 +218,8 @@ namespace IO.Swagger.Models
             sb.Append("  PaymentMethod: ").Append(PaymentMethod).Append("\n");
             sb.Append("  DeliveryAddressId: ").Append(DeliveryAddressId).Append("\n");
             sb.Append("  PickupBranchId: ").Append(PickupBranchId).Append("\n");
+            sb.Append("  TourName: ").Append(TourName).Append("\n");
+            sb.Append("  DeliveryBranchId: ").Append(DeliveryBranchId).Append("\n");
             sb.Append("  CustomerRefText: ").Append(CustomerRefText).Append("\n");
             sb.Append("  Message: ").Append(Message).Append("\n");
             sb.Append("  SingleInvoice: ").Append(SingleInvoice).Append("\n");
@@ -246,72 +263,82 @@ namespace IO.Swagger.Models
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
 
-            return 
+            return
                 (
                     CustomerNr == other.CustomerNr ||
                     CustomerNr != null &&
                     CustomerNr.Equals(other.CustomerNr)
-                ) && 
+                ) &&
                 (
                     SendMethod == other.SendMethod ||
                     SendMethod != null &&
                     SendMethod.Equals(other.SendMethod)
-                ) && 
+                ) &&
                 (
                     PartialDelivery == other.PartialDelivery ||
                     PartialDelivery != null &&
                     PartialDelivery.Equals(other.PartialDelivery)
-                ) && 
+                ) &&
                 (
                     PaymentMethod == other.PaymentMethod ||
                     PaymentMethod != null &&
                     PaymentMethod.Equals(other.PaymentMethod)
-                ) && 
+                ) &&
                 (
                     DeliveryAddressId == other.DeliveryAddressId ||
                     DeliveryAddressId != null &&
                     DeliveryAddressId.Equals(other.DeliveryAddressId)
-                ) && 
+                ) &&
                 (
                     PickupBranchId == other.PickupBranchId ||
                     PickupBranchId != null &&
                     PickupBranchId.Equals(other.PickupBranchId)
-                ) && 
+                ) &&
+                (
+                    TourName == other.TourName ||
+                    TourName != null &&
+                    TourName.Equals(other.TourName)
+                ) &&
+                (
+                    DeliveryBranchId == other.DeliveryBranchId ||
+                    DeliveryBranchId != null &&
+                    DeliveryBranchId.Equals(other.DeliveryBranchId)
+                ) &&
                 (
                     CustomerRefText == other.CustomerRefText ||
                     CustomerRefText != null &&
                     CustomerRefText.Equals(other.CustomerRefText)
-                ) && 
+                ) &&
                 (
                     Message == other.Message ||
                     Message != null &&
                     Message.Equals(other.Message)
-                ) && 
+                ) &&
                 (
                     SingleInvoice == other.SingleInvoice ||
                     SingleInvoice != null &&
                     SingleInvoice.Equals(other.SingleInvoice)
-                ) && 
+                ) &&
                 (
                     CompleteInvoice == other.CompleteInvoice ||
                     CompleteInvoice != null &&
                     CompleteInvoice.Equals(other.CompleteInvoice)
-                ) && 
+                ) &&
                 (
                     PersonalNumber == other.PersonalNumber ||
                     PersonalNumber != null &&
                     PersonalNumber.Equals(other.PersonalNumber)
-                ) && 
+                ) &&
                 (
                     SalesOrigin == other.SalesOrigin ||
                     SalesOrigin != null &&
                     SalesOrigin.Equals(other.SalesOrigin)
-                ) && 
+                ) &&
                 (
                     OrderType == other.OrderType ||
                     OrderType != null &&
                     OrderType.Equals(other.OrderType)
-                ) && 
+                ) &&
                 (
                     Items == other.Items ||
                     Items != null &&
@@ -329,40 +356,44 @@ namespace IO.Swagger.Models
             {
                 var hashCode = 41;
                 // Suitable nullity checks etc, of course :)
-                    if (CustomerNr != null)
+                if (CustomerNr != null)
                     hashCode = hashCode * 59 + CustomerNr.GetHashCode();
-                    if (SendMethod != null)
+                if (SendMethod != null)
                     hashCode = hashCode * 59 + SendMethod.GetHashCode();
-                    if (PartialDelivery != null)
+                if (PartialDelivery != null)
                     hashCode = hashCode * 59 + PartialDelivery.GetHashCode();
-                    if (PaymentMethod != null)
+                if (PaymentMethod != null)
                     hashCode = hashCode * 59 + PaymentMethod.GetHashCode();
-                    if (DeliveryAddressId != null)
+                if (DeliveryAddressId != null)
                     hashCode = hashCode * 59 + DeliveryAddressId.GetHashCode();
-                    if (PickupBranchId != null)
+                if (PickupBranchId != null)
                     hashCode = hashCode * 59 + PickupBranchId.GetHashCode();
-                    if (CustomerRefText != null)
+                if (TourName != null)
+                    hashCode = hashCode * 59 + TourName.GetHashCode();
+                if (DeliveryBranchId != null)
+                    hashCode = hashCode * 59 + DeliveryBranchId.GetHashCode();
+                if (CustomerRefText != null)
                     hashCode = hashCode * 59 + CustomerRefText.GetHashCode();
-                    if (Message != null)
+                if (Message != null)
                     hashCode = hashCode * 59 + Message.GetHashCode();
-                    if (SingleInvoice != null)
+                if (SingleInvoice != null)
                     hashCode = hashCode * 59 + SingleInvoice.GetHashCode();
-                    if (CompleteInvoice != null)
+                if (CompleteInvoice != null)
                     hashCode = hashCode * 59 + CompleteInvoice.GetHashCode();
-                    if (PersonalNumber != null)
+                if (PersonalNumber != null)
                     hashCode = hashCode * 59 + PersonalNumber.GetHashCode();
-                    if (SalesOrigin != null)
+                if (SalesOrigin != null)
                     hashCode = hashCode * 59 + SalesOrigin.GetHashCode();
-                    if (OrderType != null)
+                if (OrderType != null)
                     hashCode = hashCode * 59 + OrderType.GetHashCode();
-                    if (Items != null)
+                if (Items != null)
                     hashCode = hashCode * 59 + Items.GetHashCode();
                 return hashCode;
             }
         }
 
         #region Operators
-        #pragma warning disable 1591
+#pragma warning disable 1591
 
         public static bool operator ==(OrderRequest left, OrderRequest right)
         {
@@ -374,7 +405,7 @@ namespace IO.Swagger.Models
             return !Equals(left, right);
         }
 
-        #pragma warning restore 1591
+#pragma warning restore 1591
         #endregion Operators
     }
 }
