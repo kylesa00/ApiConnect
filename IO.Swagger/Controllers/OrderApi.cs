@@ -714,7 +714,7 @@ namespace IO.Swagger.Controllers
                 deliveryAddressId = orderRequest.DeliveryAddressId ?? string.Empty,
                 // putting both pickup and delivery address id , as nav puts both values in the same pickupBranchId field
                 //pickupBranchId = orderRequest.PickupBranchId ?? string.Empty,
-                pickupBranchId = orderRequest.SendMethod == "TOUR" ? orderRequest.DeliveryAddressId : orderRequest.PickupBranchId,
+                pickupBranchId = orderRequest.SendMethod == "TOUR" ? orderRequest.DeliveryBranchId : orderRequest.PickupBranchId,
 
                 customerRefText = orderRequest.CustomerRefText ?? string.Empty,
                 message = orderRequest.Message ?? string.Empty,
