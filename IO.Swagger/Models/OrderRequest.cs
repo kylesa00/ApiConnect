@@ -134,6 +134,12 @@ namespace IO.Swagger.Models
         [DataMember(Name = "deliveryBranchId")]
         public string DeliveryBranchId { get; set; }
 
+        /// <summary>
+        /// The time when the order will be delivered.
+        /// </summary>
+        /// <value>The time when the order will be delivered.</value>
+        [DataMember(Name = "deliveryTime")]
+        public DateTime? DeliveryTime { get; set; }
 
         /// <summary>
         /// Reference text for the header of the order which will be used in all documents e.g. invoice.
@@ -220,6 +226,7 @@ namespace IO.Swagger.Models
             sb.Append("  PickupBranchId: ").Append(PickupBranchId).Append("\n");
             sb.Append("  TourName: ").Append(TourName).Append("\n");
             sb.Append("  DeliveryBranchId: ").Append(DeliveryBranchId).Append("\n");
+            sb.Append("  DeliveryTime: ").Append(DeliveryTime).Append("\n");
             sb.Append("  CustomerRefText: ").Append(CustomerRefText).Append("\n");
             sb.Append("  Message: ").Append(Message).Append("\n");
             sb.Append("  SingleInvoice: ").Append(SingleInvoice).Append("\n");
@@ -305,6 +312,11 @@ namespace IO.Swagger.Models
                     DeliveryBranchId.Equals(other.DeliveryBranchId)
                 ) &&
                 (
+                    DeliveryTime == other.DeliveryTime ||
+                    DeliveryTime != null &&
+                    DeliveryTime.Equals(other.DeliveryTime)
+                ) &&
+                (
                     CustomerRefText == other.CustomerRefText ||
                     CustomerRefText != null &&
                     CustomerRefText.Equals(other.CustomerRefText)
@@ -372,6 +384,8 @@ namespace IO.Swagger.Models
                     hashCode = hashCode * 59 + TourName.GetHashCode();
                 if (DeliveryBranchId != null)
                     hashCode = hashCode * 59 + DeliveryBranchId.GetHashCode();
+                if (DeliveryTime != null)
+                    hashCode = hashCode * 59 + DeliveryTime.GetHashCode();
                 if (CustomerRefText != null)
                     hashCode = hashCode * 59 + CustomerRefText.GetHashCode();
                 if (Message != null)
