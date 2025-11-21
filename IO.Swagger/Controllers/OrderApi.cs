@@ -891,6 +891,8 @@ namespace IO.Swagger.Controllers
                     orderRequestItem.AdditionalTextDoc, orderRequestItem.AdditionalTextDocPrinters, orderRequestItem.RegistrationDocNr, orderRequestItem.PriceDiscTypeId);
             }
 
+            orderRequest.PickupBranchId = orderRequest.SendMethod == "TOUR" ? orderRequest.DeliveryBranchId : orderRequest.PickupBranchId;
+
             List<SqlParameter> param = new List<SqlParameter>()
             {
                 new SqlParameter("@company", company),
