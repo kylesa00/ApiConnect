@@ -917,7 +917,7 @@ namespace IO.Swagger.Controllers
                                     new Tour()
                                     {
                                         TourName = dr["tourTimeTableTourName"] == DBNull.Value ? null : dr["tourTimeTableTourName"].ToString(),
-                                        StartTime = dr["tourTimeTableStartTime"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["tourTimeTableStartTime"])
+                                        StartTime = dr["tourTimeTableStartTime"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["tourTimeTableStartTime"]).ToUniversalTime()
                                     }
                                 }
                             };
