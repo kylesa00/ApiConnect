@@ -792,7 +792,7 @@ namespace IO.Swagger.Controllers
                         Tour tour = new Tour()
                         {
                             TourName = navTourTime.tourNameTimeTable,                       
-                            StartTime = dt           
+                            StartTime = dt.ToUniversalTime()           
                         };
                         tours.Add(tour);
                     }
@@ -802,8 +802,8 @@ namespace IO.Swagger.Controllers
                         ArticleId = navAvailailitie.articleId,
                         Quantity = Convert.ToDouble(navAvailailitie.quantity),
                         BackOrder = navAvailailitie.backOrder,
-                        CutOffTime = navAvailailitie.cutOffTime,
-                        DeliveryTime = navAvailailitie.deliveryTime,
+                        CutOffTime = navAvailailitie.cutOffTime.ToUniversalTime(),
+                        DeliveryTime = navAvailailitie.deliveryTime.ToUniversalTime(),
                         ImmediateDelivery = navAvailailitie.immediateDelivery,
                         StockWarehouse = navAvailailitie.stockWarehouse,
                         DeliveryWarehouse = navAvailailitie.deliveryWarehouse,
@@ -962,8 +962,8 @@ namespace IO.Swagger.Controllers
                                     ArticleId = dr["articleId"].ToString(),
                                     Quantity = Convert.ToDouble(dr["quantity"]),
                                     BackOrder = Convert.ToBoolean(dr["backOrder"]),
-                                    CutOffTime = Convert.ToDateTime(dr["cutOffTime"]),
-                                    DeliveryTime = Convert.ToDateTime(dr["deliveryTime"]),
+                                    CutOffTime = Convert.ToDateTime(dr["cutOffTime"]).ToUniversalTime(),
+                                    DeliveryTime = Convert.ToDateTime(dr["deliveryTime"]).ToUniversalTime(),
                                     ImmediateDelivery = Convert.ToBoolean(dr["immediateDelivery"]),
                                     StockWarehouse = dr["stockWarehouse"].ToString(),
                                     DeliveryWarehouse = dr["deliveryWarehouse"].ToString(),
@@ -973,7 +973,7 @@ namespace IO.Swagger.Controllers
                                     TourName = dr["tourName"].ToString(),
                                     TourTimeTable = new List<Tour>() { new Tour() {
                                     TourName = dr["tourTimeTableTourName"].ToString(),
-                                    StartTime = Convert.ToDateTime(dr["tourTimeTableStartTime"]) }
+                                    StartTime = Convert.ToDateTime(dr["tourTimeTableStartTime"]).ToUniversalTime() }
                                 }
                                 };
                                 availabilities.Add(availability);
@@ -983,7 +983,7 @@ namespace IO.Swagger.Controllers
                                 availabilities.Find(e => e.ArticleId == availability.ArticleId).TourTimeTable.Add(new Tour()
                                 {
                                     TourName = dr["tourTimeTableTourName"].ToString(),
-                                    StartTime = Convert.ToDateTime(dr["tourTimeTableStartTime"])
+                                    StartTime = Convert.ToDateTime(dr["tourTimeTableStartTime"]).ToUniversalTime()
                                 });
                             }
                         }
