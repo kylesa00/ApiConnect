@@ -902,8 +902,26 @@ namespace IO.Swagger.Controllers
                                 ArticleId = dr["articleId"] == DBNull.Value ? null : dr["articleId"].ToString(),
                                 Quantity = dr["quantity"] == DBNull.Value ? (double?)null : Convert.ToDouble(dr["quantity"]),
                                 BackOrder = dr["backOrder"] == DBNull.Value ? (bool?)null : Convert.ToBoolean(dr["backOrder"]),
-                                CutOffTime = dr["cutOffTime"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["cutOffTime"]).ToUniversalTime(),
-                                DeliveryTime = dr["deliveryTime"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["deliveryTime"]).ToUniversalTime(),
+                                CutOffTime = dr["cutOffTime"] == DBNull.Value ? (DateTime?)null :
+                                    new DateTime(
+                                        Convert.ToDateTime(dr["cutOffTime"]).ToUniversalTime().Year,
+                                        Convert.ToDateTime(dr["cutOffTime"]).ToUniversalTime().Month,
+                                        Convert.ToDateTime(dr["cutOffTime"]).ToUniversalTime().Day,
+                                        Convert.ToDateTime(dr["cutOffTime"]).ToUniversalTime().Hour,
+                                        Convert.ToDateTime(dr["cutOffTime"]).ToUniversalTime().Minute,
+                                        Convert.ToDateTime(dr["cutOffTime"]).ToUniversalTime().Second,
+                                        0, DateTimeKind.Utc
+                                    ),
+                                DeliveryTime = dr["deliveryTime"] == DBNull.Value ? (DateTime?)null :
+                                    new DateTime(
+                                        Convert.ToDateTime(dr["deliveryTime"]).ToUniversalTime().Year,
+                                        Convert.ToDateTime(dr["deliveryTime"]).ToUniversalTime().Month,
+                                        Convert.ToDateTime(dr["deliveryTime"]).ToUniversalTime().Day,
+                                        Convert.ToDateTime(dr["deliveryTime"]).ToUniversalTime().Hour,
+                                        Convert.ToDateTime(dr["deliveryTime"]).ToUniversalTime().Minute,
+                                        Convert.ToDateTime(dr["deliveryTime"]).ToUniversalTime().Second,
+                                        0, DateTimeKind.Utc
+                                    ),
                                 //DeliveryTime2 = dr["deliveryTime"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["deliveryTime"]),
                                 ImmediateDelivery = dr["immediateDelivery"] == DBNull.Value ? (bool?)null : Convert.ToBoolean(dr["immediateDelivery"]),
                                 StockWarehouse = dr["stockWarehouse"] == DBNull.Value ? null : dr["stockWarehouse"].ToString(),
