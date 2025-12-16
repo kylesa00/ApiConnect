@@ -147,12 +147,29 @@ namespace IO.Swagger.Helpers
         }
 
         /// <summary>
-        /// Safely reads a double value from SqlDataReader, returning null if DBNull
+        /// Safely reads a double value from SqlDataReader, returning null if DBNull.
+        /// HANDLES BOTH DECIMAL AND DOUBLE from database!
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double? GetDoubleOrNull(SqlDataReader reader, int ordinal)
         {
-            return reader.IsDBNull(ordinal) ? (double?)null : reader.GetDouble(ordinal);
+            if (reader.IsDBNull(ordinal))
+                return null;
+
+            // FIX: Handle both decimal (common in SQL Server) and double
+            var value = reader.GetValue(ordinal);
+            
+            if (value is decimal decimalValue)
+                return (double)decimalValue;  // Convert decimal to double
+            
+            if (value is double doubleValue)
+                return doubleValue;
+            
+            if (value is float floatValue)
+                return (double)floatValue;
+            
+            // Fallback: try to convert whatever type it is
+            return Convert.ToDouble(value);
         }
 
         /// <summary>
@@ -170,7 +187,22 @@ namespace IO.Swagger.Helpers
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long? GetInt64OrNull(SqlDataReader reader, int ordinal)
         {
-            return reader.IsDBNull(ordinal) ? (long?)null : reader.GetInt64(ordinal);
+            if (reader.IsDBNull(ordinal))
+                return null;
+
+            // Handle different integer types
+            var value = reader.GetValue(ordinal);
+            
+            if (value is long longValue)
+                return longValue;
+            
+            if (value is int intValue)
+                return (long)intValue;
+            
+            if (value is decimal decimalValue)
+                return (long)decimalValue;
+            
+            return Convert.ToInt64(value);
         }
 
         /// <summary>
@@ -180,6 +212,29 @@ namespace IO.Swagger.Helpers
         public static DateTime? GetDateTimeOrNull(SqlDataReader reader, int ordinal)
         {
             return reader.IsDBNull(ordinal) ? (DateTime?)null : reader.GetDateTime(ordinal);
+        }
+
+        /// <summary>
+        /// NEW: Safely reads a decimal value from SqlDataReader, returning null if DBNull
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static decimal? GetDecimalOrNull(SqlDataReader reader, int ordinal)
+        {
+            if (reader.IsDBNull(ordinal))
+                return null;
+
+            var value = reader.GetValue(ordinal);
+            
+            if (value is decimal decimalValue)
+                return decimalValue;
+            
+            if (value is double doubleValue)
+                return (decimal)doubleValue;
+            
+            if (value is float floatValue)
+                return (decimal)floatValue;
+            
+            return Convert.ToDecimal(value);
         }
         #endregion
 
