@@ -20,7 +20,7 @@ using IO.Swagger.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using IO.Swagger.Models;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using IO.Swagger.Helpers;
 using System.Linq;
 using static IO.Swagger.Models.ContactInfo;

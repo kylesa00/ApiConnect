@@ -27,7 +27,7 @@ using Microsoft.AspNetCore.Routing;
 using System.Runtime.CompilerServices;
 using System.Data;
 using IO.Swagger.Helpers;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using static IO.Swagger.Models.Customer;
 using System.Runtime.Loader;
 using static IO.Swagger.Models.Address;

@@ -19,7 +19,7 @@ using IO.Swagger.Attributes;
 
 using Microsoft.AspNetCore.Authorization;
 using IO.Swagger.Models;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using IO.Swagger.Helpers;
 using System.Data;
 using System.Threading.Tasks;

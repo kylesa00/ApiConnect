@@ -16,7 +16,7 @@ using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using IO.Swagger.Attributes;
 using IO.Swagger.Models;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 using IO.Swagger.Helpers;
 using static IO.Swagger.Models.Order;
