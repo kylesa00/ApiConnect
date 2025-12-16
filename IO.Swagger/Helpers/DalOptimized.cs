@@ -173,12 +173,35 @@ namespace IO.Swagger.Helpers
         }
 
         /// <summary>
-        /// Safely reads a bool value from SqlDataReader, returning null if DBNull
+        /// Safely reads a bool value from SqlDataReader, returning null if DBNull.
+        /// HANDLES BOTH BIT and INT (0/1) from database!
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? GetBoolOrNull(SqlDataReader reader, int ordinal)
         {
-            return reader.IsDBNull(ordinal) ? (bool?)null : reader.GetBoolean(ordinal);
+            if (reader.IsDBNull(ordinal))
+                return null;
+
+            // FIX: Handle both BIT (boolean) and INT (0/1)
+            var value = reader.GetValue(ordinal);
+            
+            if (value is bool boolValue)
+                return boolValue;
+            
+            if (value is int intValue)
+                return intValue != 0;  // 0 = false, anything else = true
+            
+            if (value is byte byteValue)
+                return byteValue != 0;
+            
+            if (value is short shortValue)
+                return shortValue != 0;
+            
+            if (value is long longValue)
+                return longValue != 0;
+            
+            // Fallback: try to convert
+            return Convert.ToBoolean(value);
         }
 
         /// <summary>
