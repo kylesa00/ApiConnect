@@ -3,7 +3,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using Microsoft.OpenApi.Models;
+    using Microsoft.OpenApi;
 using System;
 
 namespace IO.Swagger.Filters
@@ -34,7 +34,30 @@ namespace IO.Swagger.Filters
                     var requiredAttr = attributes.FirstOrDefault(p => p.AttributeType == typeof(RequiredAttribute));
                     if (requiredAttr != null)
                     {
-                        swaggerParam.Required = true;
+                        var param = swaggerParam as OpenApiParameter;
+                        if (param != null)
+                        {
+                            var newParam = new OpenApiParameter
+                            {
+                                Name = param.Name,
+                                In = param.In,
+                                Description = param.Description,
+                                Required = true, // Set required to true
+                                Deprecated = param.Deprecated,
+                                AllowEmptyValue = param.AllowEmptyValue,
+                                Style = param.Style,
+                                Explode = param.Explode,
+                                AllowReserved = param.AllowReserved,
+                                Schema = param.Schema,
+                                Examples = param.Examples,
+                                Example = param.Example,
+                                Content = param.Content
+                            };
+                            
+                            var index = operation.Parameters.IndexOf(swaggerParam);
+                            operation.Parameters[index] = newParam;
+                            swaggerParam = newParam;
+                        }
                     }
 
                     // Regex Pattern [RegularExpression]
@@ -42,9 +65,42 @@ namespace IO.Swagger.Filters
                     if (regexAttr != null)
                     {
                         string regex = (string)regexAttr.ConstructorArguments[0].Value;
-                        if (swaggerParam is OpenApiParameter)
+                        var param = swaggerParam as OpenApiParameter;
+                        if (param != null && param.Schema != null)
                         {
-                            ((OpenApiParameter)swaggerParam).Schema.Pattern = regex;
+                            var newSchema = new OpenApiSchema
+                            {
+                                Type = param.Schema.Type,
+                                Format = param.Schema.Format,
+                                Pattern = regex, // Set pattern
+                                MinLength = param.Schema.MinLength,
+                                MaxLength = param.Schema.MaxLength,
+                                Minimum = param.Schema.Minimum,
+                                Maximum = param.Schema.Maximum,
+                                Default = param.Schema.Default,
+                                Description = param.Schema.Description
+                            };
+                            
+                            var newParam = new OpenApiParameter
+                            {
+                                Name = param.Name,
+                                In = param.In,
+                                Description = param.Description,
+                                Required = param.Required,
+                                Deprecated = param.Deprecated,
+                                AllowEmptyValue = param.AllowEmptyValue,
+                                Style = param.Style,
+                                Explode = param.Explode,
+                                AllowReserved = param.AllowReserved,
+                                Schema = newSchema,
+                                Examples = param.Examples,
+                                Example = param.Example,
+                                Content = param.Content
+                            };
+                            
+                            var index = operation.Parameters.IndexOf(swaggerParam);
+                            operation.Parameters[index] = newParam;
+                            swaggerParam = newParam;
                         }
                     }
 
@@ -72,10 +128,45 @@ namespace IO.Swagger.Filters
                         maxLength = (int)maxLengthAttr.ConstructorArguments[0].Value;
                     }
 
-                    if (swaggerParam is OpenApiParameter)
+                    if (minLenght.HasValue || maxLength.HasValue)
                     {
-                        ((OpenApiParameter)swaggerParam).Schema.MinLength = minLenght;
-                        ((OpenApiParameter)swaggerParam).Schema.MaxLength = maxLength;
+                        var param = swaggerParam as OpenApiParameter;
+                        if (param != null && param.Schema != null)
+                        {
+                            var newSchema = new OpenApiSchema
+                            {
+                                Type = param.Schema.Type,
+                                Format = param.Schema.Format,
+                                Pattern = param.Schema.Pattern,
+                                MinLength = minLenght ?? param.Schema.MinLength, // Set min length
+                                MaxLength = maxLength ?? param.Schema.MaxLength, // Set max length
+                                Minimum = param.Schema.Minimum,
+                                Maximum = param.Schema.Maximum,
+                                Default = param.Schema.Default,
+                                Description = param.Schema.Description
+                            };
+                            
+                            var newParam = new OpenApiParameter
+                            {
+                                Name = param.Name,
+                                In = param.In,
+                                Description = param.Description,
+                                Required = param.Required,
+                                Deprecated = param.Deprecated,
+                                AllowEmptyValue = param.AllowEmptyValue,
+                                Style = param.Style,
+                                Explode = param.Explode,
+                                AllowReserved = param.AllowReserved,
+                                Schema = newSchema,
+                                Examples = param.Examples,
+                                Example = param.Example,
+                                Content = param.Content
+                            };
+                            
+                            var index = operation.Parameters.IndexOf(swaggerParam);
+                            operation.Parameters[index] = newParam;
+                            swaggerParam = newParam;
+                        }
                     }
 
                     // Range [Range]
@@ -83,12 +174,43 @@ namespace IO.Swagger.Filters
                     if (rangeAttr != null)
                     {
                         int rangeMin = Convert.ToInt32(rangeAttr.ConstructorArguments[0].Value);
-                        int rangeMax = int.MaxValue;//Convert.ToInt64(rangeAttr.ConstructorArguments[1].Value);
+                        int rangeMax = int.MaxValue;
 
-                        if (swaggerParam is OpenApiParameter)
+                        var param = swaggerParam as OpenApiParameter;
+                        if (param != null && param.Schema != null)
                         {
-                            ((OpenApiParameter)swaggerParam).Schema.Minimum = rangeMin;
-                            ((OpenApiParameter)swaggerParam).Schema.Maximum = rangeMax;
+                            var newSchema = new OpenApiSchema
+                            {
+                                Type = param.Schema.Type,
+                                Format = param.Schema.Format,
+                                Pattern = param.Schema.Pattern,
+                                MinLength = param.Schema.MinLength,
+                                MaxLength = param.Schema.MaxLength,
+                                Minimum = rangeMin.ToString(), // Set minimum
+                                Maximum = rangeMax.ToString(), // Set maximum
+                                Default = param.Schema.Default,
+                                Description = param.Schema.Description
+                            };
+                            
+                            var newParam = new OpenApiParameter
+                            {
+                                Name = param.Name,
+                                In = param.In,
+                                Description = param.Description,
+                                Required = param.Required,
+                                Deprecated = param.Deprecated,
+                                AllowEmptyValue = param.AllowEmptyValue,
+                                Style = param.Style,
+                                Explode = param.Explode,
+                                AllowReserved = param.AllowReserved,
+                                Schema = newSchema,
+                                Examples = param.Examples,
+                                Example = param.Example,
+                                Content = param.Content
+                            };
+                            
+                            var index = operation.Parameters.IndexOf(swaggerParam);
+                            operation.Parameters[index] = newParam;
                         }
                     }
                 }
