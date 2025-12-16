@@ -1,5 +1,5 @@
 /*
- * PERFORMANCE TEST CONTROLLER - ENHANCED WITH JSON SERIALIZER COMPARISON
+ * PERFORMANCE TEST CONTROLLER - WITH SERVER-SIDE TIMING
  */
 
 using System;
@@ -13,30 +13,26 @@ using Microsoft.Data.SqlClient;
 using IO.Swagger.Helpers;
 using System.Data;
 using System.Threading.Tasks;
-using System.Text.Json; // ADD THIS
-using System.Text.Json.Serialization; // ADD THIS
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Diagnostics; // ADD THIS
 
 namespace IO.Swagger.Controllers
 {
-    /// <summary>
-    /// Optimized Article API Controller for Performance Testing
-    /// Now includes System.Text.Json comparison
-    /// </summary>
     [ApiController]
     [Route("/apps/prod-webshop-service-app/webshop-service/test-optimized")]
     public class ArticleApiTestOptimizedController : ControllerBase
     {
-        // Configure System.Text.Json options once (reuse for performance)
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase, // Match Newtonsoft's camelCase
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            WriteIndented = false, // Compact output for performance
-            PropertyNameCaseInsensitive = true // Accept any case on input
+            WriteIndented = false,
+            PropertyNameCaseInsensitive = true
         };
 
         /// <summary>
-        /// OPTIMIZED VERSION with System.Text.Json serialization
+        /// OPTIMIZED VERSION with System.Text.Json + SERVER TIMING
         /// </summary>
         [HttpPost]
         [Route("articles/{company}/availabilities")]
@@ -47,6 +43,12 @@ namespace IO.Swagger.Controllers
             [FromRoute][Required] string company, 
             [FromBody] AvailabilityRequest availabilityRequest)
         {
+            // START TOTAL TIMER
+            var totalTimer = Stopwatch.StartNew();
+            var dbTimer = new Stopwatch();
+            var mappingTimer = new Stopwatch();
+            var serializationTimer = new Stopwatch();
+
             if (!Companies.IsCompanyExists(company))
             {
                 return StatusCode(400, (new ErrorInfo()
@@ -75,14 +77,14 @@ namespace IO.Swagger.Controllers
             {
                 dt.Rows.Add(
                     availabilityRequestItem.ArticleId, 
-                    availabilityRequestItem.Quantity, 
+                    availabilityRequestItem.Quantity ?? 0.0,
                     availabilityRequest.CustomerNr,
                     availabilityRequest.SendMethod, 
-                    availabilityRequest.PartialDelivery, 
+                    availabilityRequest.PartialDelivery ?? false,
                     availabilityRequest.DeliveryAddressId, 
                     availabilityRequest.PickupBranchId,
                     availabilityRequest.PickingWarehouse, 
-                    availabilityRequest.IsTourTimetable
+                    availabilityRequest.IsTourTimetable ?? false
                 );
             }
 
@@ -101,8 +103,12 @@ namespace IO.Swagger.Controllers
 
             try
             {
+                // TIME DATABASE ACCESS
+                dbTimer.Start();
                 using (SqlDataReader reader = await DalOptimized.GetDataReaderAsync("GetAvailabilities", param))
                 {
+                    dbTimer.Stop();
+
                     if (!reader.HasRows)
                     {
                         return StatusCode(400, (new ErrorInfo()
@@ -111,6 +117,9 @@ namespace IO.Swagger.Controllers
                             ErrorMessage = "Articles not found"
                         }));
                     }
+
+                    // TIME MAPPING
+                    mappingTimer.Start();
 
                     int articleIdOrd = reader.GetOrdinal("articleId");
                     int quantityOrd = reader.GetOrdinal("quantity");
@@ -180,21 +189,46 @@ namespace IO.Swagger.Controllers
                         };
                         availabilities.Add(availability);
                     }
+
+                    mappingTimer.Stop();
                 }
 
-                // PERFORMANCE: Use System.Text.Json for serialization
+                // TIME SERIALIZATION
+                serializationTimer.Start();
+                var json = System.Text.Json.JsonSerializer.Serialize(
+                    new Availabilities() { _Availabilities = availabilities },
+                    _jsonOptions
+                );
+                serializationTimer.Stop();
+
+                totalTimer.Stop();
+
+                // ADD PERFORMANCE HEADERS
+                Response.Headers.Append("X-Server-Timing-Total", $"{totalTimer.ElapsedMilliseconds}ms");
+                Response.Headers.Append("X-Server-Timing-Database", $"{dbTimer.ElapsedMilliseconds}ms");
+                Response.Headers.Append("X-Server-Timing-Mapping", $"{mappingTimer.ElapsedMilliseconds}ms");
+                Response.Headers.Append("X-Server-Timing-Serialization", $"{serializationTimer.ElapsedMilliseconds}ms");
+                Response.Headers.Append("X-Optimization-Type", "SqlDataReader + System.Text.Json");
+                
+#if DEBUG
+                Response.Headers.Append("X-Build-Configuration", "DEBUG - OPTIMIZATIONS DISABLED!");
+#else
+                Response.Headers.Append("X-Build-Configuration", "RELEASE");
+#endif
+
                 return new ContentResult
                 {
                     ContentType = "application/json",
                     StatusCode = 200,
-                    Content = System.Text.Json.JsonSerializer.Serialize(
-                        new Availabilities() { _Availabilities = availabilities },
-                        _jsonOptions
-                    )
+                    Content = json
                 };
             }
             catch (Exception ex)
             {
+                totalTimer.Stop();
+                Response.Headers.Append("X-Server-Timing-Total", $"{totalTimer.ElapsedMilliseconds}ms");
+                Response.Headers.Append("X-Error", ex.Message);
+                
                 return StatusCode(500, new ErrorInfo()
                 {
                     ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
@@ -204,7 +238,7 @@ namespace IO.Swagger.Controllers
         }
 
         /// <summary>
-        /// OPTIMIZED VERSION with Newtonsoft.Json (for comparison)
+        /// OPTIMIZED VERSION with Newtonsoft.Json + SERVER TIMING
         /// </summary>
         [HttpPost]
         [Route("articles/{company}/availabilities-newtonsoft")]
@@ -215,7 +249,10 @@ namespace IO.Swagger.Controllers
             [FromRoute][Required] string company, 
             [FromBody] AvailabilityRequest availabilityRequest)
         {
-            // Same logic as above, but return with default ObjectResult (uses Newtonsoft)
+            var totalTimer = Stopwatch.StartNew();
+            var dbTimer = new Stopwatch();
+            var mappingTimer = new Stopwatch();
+
             if (!Companies.IsCompanyExists(company))
             {
                 return StatusCode(400, (new ErrorInfo()
@@ -244,14 +281,14 @@ namespace IO.Swagger.Controllers
             {
                 dt.Rows.Add(
                     availabilityRequestItem.ArticleId, 
-                    availabilityRequestItem.Quantity, 
+                    availabilityRequestItem.Quantity ?? 0.0,
                     availabilityRequest.CustomerNr,
                     availabilityRequest.SendMethod, 
-                    availabilityRequest.PartialDelivery, 
+                    availabilityRequest.PartialDelivery ?? false,
                     availabilityRequest.DeliveryAddressId, 
                     availabilityRequest.PickupBranchId,
                     availabilityRequest.PickingWarehouse, 
-                    availabilityRequest.IsTourTimetable
+                    availabilityRequest.IsTourTimetable ?? false
                 );
             }
 
@@ -270,8 +307,11 @@ namespace IO.Swagger.Controllers
 
             try
             {
+                dbTimer.Start();
                 using (SqlDataReader reader = await DalOptimized.GetDataReaderAsync("GetAvailabilities", param))
                 {
+                    dbTimer.Stop();
+
                     if (!reader.HasRows)
                     {
                         return StatusCode(400, (new ErrorInfo()
@@ -280,6 +320,8 @@ namespace IO.Swagger.Controllers
                             ErrorMessage = "Articles not found"
                         }));
                     }
+
+                    mappingTimer.Start();
 
                     int articleIdOrd = reader.GetOrdinal("articleId");
                     int quantityOrd = reader.GetOrdinal("quantity");
@@ -349,13 +391,30 @@ namespace IO.Swagger.Controllers
                         };
                         availabilities.Add(availability);
                     }
+
+                    mappingTimer.Stop();
                 }
 
-                // Use default ObjectResult (Newtonsoft.Json via MVC configuration)
+                totalTimer.Stop();
+
+                Response.Headers.Append("X-Server-Timing-Total", $"{totalTimer.ElapsedMilliseconds}ms");
+                Response.Headers.Append("X-Server-Timing-Database", $"{dbTimer.ElapsedMilliseconds}ms");
+                Response.Headers.Append("X-Server-Timing-Mapping", $"{mappingTimer.ElapsedMilliseconds}ms");
+                Response.Headers.Append("X-Optimization-Type", "SqlDataReader + Newtonsoft.Json");
+                
+#if DEBUG
+                Response.Headers.Append("X-Build-Configuration", "DEBUG");
+#else
+                Response.Headers.Append("X-Build-Configuration", "RELEASE");
+#endif
+
                 return new ObjectResult(new Availabilities() { _Availabilities = availabilities });
             }
             catch (Exception ex)
             {
+                totalTimer.Stop();
+                Response.Headers.Append("X-Server-Timing-Total", $"{totalTimer.ElapsedMilliseconds}ms");
+                
                 return StatusCode(500, new ErrorInfo()
                 {
                     ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
@@ -365,7 +424,7 @@ namespace IO.Swagger.Controllers
         }
 
         /// <summary>
-        /// ORIGINAL VERSION (unchanged - for comparison)
+        /// ORIGINAL VERSION + SERVER TIMING
         /// </summary>
         [HttpPost]
         [Route("articles/{company}/availabilities-original")]
@@ -376,7 +435,19 @@ namespace IO.Swagger.Controllers
             [FromRoute][Required] string company, 
             [FromBody] AvailabilityRequest availabilityRequest)
         {
-            // Original implementation (for comparison)
+            var totalTimer = Stopwatch.StartNew();
+            var dbTimer = new Stopwatch();
+            var mappingTimer = new Stopwatch();
+
+            if (!Companies.IsCompanyExists(company))
+            {
+                return StatusCode(400, (new ErrorInfo()
+                {
+                    ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
+                    ErrorMessage = "Company not found"
+                }));
+            }
+
             DataTable dt = new DataTable();
             dt.Columns.Add("articleId", typeof(string));
             dt.Columns.Add("quantity", typeof(double));
@@ -408,9 +479,14 @@ namespace IO.Swagger.Controllers
 
             try
             {
+                dbTimer.Start();
                 DataSet ds = await Dal.GetDataAsync("GetAvailabilities", param);
+                dbTimer.Stop();
+
                 if (ds.Tables[0].Rows.Count > 0)
                 {
+                    mappingTimer.Start();
+                    
                     foreach (DataRow dr in ds.Tables[0].Rows)
                     {
                         Availability availability = new Availability()
@@ -456,17 +532,40 @@ namespace IO.Swagger.Controllers
                         };
                         availabilities.Add(availability);
                     }
+
+                    mappingTimer.Stop();
+                    totalTimer.Stop();
+
+                    Response.Headers.Append("X-Server-Timing-Total", $"{totalTimer.ElapsedMilliseconds}ms");
+                    Response.Headers.Append("X-Server-Timing-Database", $"{dbTimer.ElapsedMilliseconds}ms");
+                    Response.Headers.Append("X-Server-Timing-Mapping", $"{mappingTimer.ElapsedMilliseconds}ms");
+                    Response.Headers.Append("X-Optimization-Type", "Original (DataSet + Newtonsoft)");
+                    
+#if DEBUG
+                    Response.Headers.Append("X-Build-Configuration", "DEBUG");
+#else
+                    Response.Headers.Append("X-Build-Configuration", "RELEASE");
+#endif
+
                     return new ObjectResult(new Availabilities() { _Availabilities = availabilities });
                 }
                 else
+                {
+                    totalTimer.Stop();
+                    Response.Headers.Append("X-Server-Timing-Total", $"{totalTimer.ElapsedMilliseconds}ms");
+                    
                     return StatusCode(400, (new ErrorInfo()
                     {
                         ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
                         ErrorMessage = "Articles not found"
                     }));
+                }
             }
             catch (Exception ex)
             {
+                totalTimer.Stop();
+                Response.Headers.Append("X-Server-Timing-Total", $"{totalTimer.ElapsedMilliseconds}ms");
+                
                 return StatusCode(500, new ErrorInfo()
                 {
                     ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
