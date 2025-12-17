@@ -138,12 +138,11 @@ namespace IO.Swagger.Helpers
                 }
             }
             
-            // Call the stored procedure with OPTION (RECOMPILE) to get fresh plan
+            // Call the stored procedure withget fresh plan
             sql.AppendLine($@"
 EXEC {spName} 
     @company = '{companyParam?.Value.ToString().Replace("'", "''")}',
-    @availabilityRequest = @availabilityRequest
-OPTION (RECOMPILE);");
+    @availabilityRequest = @availabilityRequest;");
 
             // Execute as ad-hoc batch (like SSMS)
             SqlCommand cmd = new SqlCommand(sql.ToString(), con);
