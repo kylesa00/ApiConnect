@@ -1,4 +1,4 @@
-/*
+﻿/*
  * PERFORMANCE TEST CONTROLLER - WITH SERVER-SIDE TIMING
  */
 
@@ -108,9 +108,12 @@ namespace IO.Swagger.Controllers
                 dbTimer.Start();
                 using (SqlDataReader reader = await DalOptimized.GetDataReaderAsync("GetAvailabilities", param))
                 {
+                    // Load ALL data at once into DataTable
+                    var dataTable = new DataTable();
+                    dataTable.Load(reader);  // ← ONE network operation!
                     dbTimer.Stop();
 
-                    if (!reader.HasRows)
+                    if (dataTable.Rows.Count == 0)
                     {
                         return StatusCode(400, (new ErrorInfo()
                         {
@@ -122,27 +125,12 @@ namespace IO.Swagger.Controllers
                     // TIME MAPPING
                     mappingTimer.Start();
 
-                    int articleIdOrd = reader.GetOrdinal("articleId");
-                    int quantityOrd = reader.GetOrdinal("quantity");
-                    int backOrderOrd = reader.GetOrdinal("backOrder");
-                    int cutOffTimeOrd = reader.GetOrdinal("cutOffTime");
-                    int deliveryTimeOrd = reader.GetOrdinal("deliveryTime");
-                    int immediateDeliveryOrd = reader.GetOrdinal("immediateDelivery");
-                    int stockWarehouseOrd = reader.GetOrdinal("stockWarehouse");
-                    int deliveryWarehouseOrd = reader.GetOrdinal("deliveryWarehouse");
-                    int sendMethodOrd = reader.GetOrdinal("sendMethod");
-                    int assignmentPriorityOrd = reader.GetOrdinal("assignmentPriority");
-                    int errorMessageOrd = reader.GetOrdinal("errorMessage");
-                    int tourNameOrd = reader.GetOrdinal("tourName");
-                    int tourTimeTableTourNameOrd = reader.GetOrdinal("tourTimeTableTourName");
-                    int tourTimeTableStartTimeOrd = reader.GetOrdinal("tourTimeTableStartTime");
-
-                    while (await reader.ReadAsync())
+                    foreach (DataRow dr in dataTable.Rows)
                     {
                         DateTime? cutOffTimeUtc = null;
-                        if (!reader.IsDBNull(cutOffTimeOrd))
+                        if (dr["cutOffTime"] != DBNull.Value)
                         {
-                            var cutOffTemp = reader.GetDateTime(cutOffTimeOrd).ToUniversalTime();
+                            var cutOffTemp = ((DateTime)dr["cutOffTime"]).ToUniversalTime();
                             cutOffTimeUtc = new DateTime(
                                 cutOffTemp.Year, cutOffTemp.Month, cutOffTemp.Day,
                                 cutOffTemp.Hour, cutOffTemp.Minute, cutOffTemp.Second,
@@ -151,9 +139,9 @@ namespace IO.Swagger.Controllers
                         }
 
                         DateTime? deliveryTimeUtc = null;
-                        if (!reader.IsDBNull(deliveryTimeOrd))
+                        if (dr["deliveryTime"] != DBNull.Value)
                         {
-                            var deliveryTemp = reader.GetDateTime(deliveryTimeOrd).ToUniversalTime();
+                            var deliveryTemp = ((DateTime)dr["deliveryTime"]).ToUniversalTime();
                             deliveryTimeUtc = new DateTime(
                                 deliveryTemp.Year, deliveryTemp.Month, deliveryTemp.Day,
                                 deliveryTemp.Hour, deliveryTemp.Minute, deliveryTemp.Second,
@@ -161,29 +149,29 @@ namespace IO.Swagger.Controllers
                             );
                         }
 
-                        DateTime? tourStartTimeUtc = !reader.IsDBNull(tourTimeTableStartTimeOrd)
-                            ? reader.GetDateTime(tourTimeTableStartTimeOrd).ToUniversalTime()
+                        DateTime? tourStartTimeUtc = dr["tourTimeTableStartTime"] != DBNull.Value
+                            ? ((DateTime)dr["tourTimeTableStartTime"]).ToUniversalTime()
                             : (DateTime?)null;
 
-                        Availability availability = new Availability()
+                        var availability = new Availability()
                         {
-                            ArticleId = DalOptimized.GetStringOrNull(reader, articleIdOrd),
-                            Quantity = DalOptimized.GetDoubleOrNull(reader, quantityOrd),
-                            BackOrder = DalOptimized.GetBoolOrNull(reader, backOrderOrd),
+                            ArticleId = dr["articleId"] == DBNull.Value ? null : dr["articleId"].ToString(),
+                            Quantity = dr["quantity"] == DBNull.Value ? (double?)null : Convert.ToDouble(dr["quantity"]),
+                            BackOrder = dr["backOrder"] == DBNull.Value ? (bool?)null : Convert.ToBoolean(dr["backOrder"]),
                             CutOffTime = cutOffTimeUtc,
                             DeliveryTime = deliveryTimeUtc,
-                            ImmediateDelivery = DalOptimized.GetBoolOrNull(reader, immediateDeliveryOrd),
-                            StockWarehouse = DalOptimized.GetStringOrNull(reader, stockWarehouseOrd),
-                            DeliveryWarehouse = DalOptimized.GetStringOrNull(reader, deliveryWarehouseOrd),
-                            SendMethod = DalOptimized.GetStringOrNull(reader, sendMethodOrd),
-                            AssignmentPriority = DalOptimized.GetInt64OrNull(reader, assignmentPriorityOrd),
-                            ErrorMessage = DalOptimized.GetStringOrNull(reader, errorMessageOrd),
-                            TourName = DalOptimized.GetStringOrNull(reader, tourNameOrd),
+                            ImmediateDelivery = dr["immediateDelivery"] == DBNull.Value ? (bool?)null : Convert.ToBoolean(dr["immediateDelivery"]),
+                            StockWarehouse = dr["stockWarehouse"] == DBNull.Value ? null : dr["stockWarehouse"].ToString(),
+                            DeliveryWarehouse = dr["deliveryWarehouse"] == DBNull.Value ? null : dr["deliveryWarehouse"].ToString(),
+                            SendMethod = dr["sendMethod"] == DBNull.Value ? null : dr["sendMethod"].ToString(),
+                            AssignmentPriority = dr["assignmentPriority"] == DBNull.Value ? (long?)null : Convert.ToInt64(dr["assignmentPriority"]),
+                            ErrorMessage = dr["errorMessage"] == DBNull.Value ? null : dr["errorMessage"].ToString(),
+                            TourName = dr["tourName"] == DBNull.Value ? null : dr["tourName"].ToString(),
                             TourTimeTable = new List<Tour>()
                             {
                                 new Tour()
                                 {
-                                    TourName = DalOptimized.GetStringOrNull(reader, tourTimeTableTourNameOrd),
+                                    TourName = dr["tourTimeTableTourName"] == DBNull.Value ? null : dr["tourTimeTableTourName"].ToString(),
                                     StartTime = tourStartTimeUtc
                                 }
                             }
@@ -311,9 +299,12 @@ namespace IO.Swagger.Controllers
                 dbTimer.Start();
                 using (SqlDataReader reader = await DalOptimized.GetDataReaderAsync("GetAvailabilities", param))
                 {
+                    // Load ALL data at once into DataTable
+                    var dataTable = new DataTable();
+                    dataTable.Load(reader);  // ← ONE network operation!
                     dbTimer.Stop();
 
-                    if (!reader.HasRows)
+                    if (dataTable.Rows.Count == 0)
                     {
                         return StatusCode(400, (new ErrorInfo()
                         {
@@ -324,27 +315,12 @@ namespace IO.Swagger.Controllers
 
                     mappingTimer.Start();
 
-                    int articleIdOrd = reader.GetOrdinal("articleId");
-                    int quantityOrd = reader.GetOrdinal("quantity");
-                    int backOrderOrd = reader.GetOrdinal("backOrder");
-                    int cutOffTimeOrd = reader.GetOrdinal("cutOffTime");
-                    int deliveryTimeOrd = reader.GetOrdinal("deliveryTime");
-                    int immediateDeliveryOrd = reader.GetOrdinal("immediateDelivery");
-                    int stockWarehouseOrd = reader.GetOrdinal("stockWarehouse");
-                    int deliveryWarehouseOrd = reader.GetOrdinal("deliveryWarehouse");
-                    int sendMethodOrd = reader.GetOrdinal("sendMethod");
-                    int assignmentPriorityOrd = reader.GetOrdinal("assignmentPriority");
-                    int errorMessageOrd = reader.GetOrdinal("errorMessage");
-                    int tourNameOrd = reader.GetOrdinal("tourName");
-                    int tourTimeTableTourNameOrd = reader.GetOrdinal("tourTimeTableTourName");
-                    int tourTimeTableStartTimeOrd = reader.GetOrdinal("tourTimeTableStartTime");
-
-                    while (await reader.ReadAsync())
+                    foreach (DataRow dr in dataTable.Rows)
                     {
                         DateTime? cutOffTimeUtc = null;
-                        if (!reader.IsDBNull(cutOffTimeOrd))
+                        if (dr["cutOffTime"] != DBNull.Value)
                         {
-                            var cutOffTemp = reader.GetDateTime(cutOffTimeOrd).ToUniversalTime();
+                            var cutOffTemp = ((DateTime)dr["cutOffTime"]).ToUniversalTime();
                             cutOffTimeUtc = new DateTime(
                                 cutOffTemp.Year, cutOffTemp.Month, cutOffTemp.Day,
                                 cutOffTemp.Hour, cutOffTemp.Minute, cutOffTemp.Second,
@@ -353,9 +329,9 @@ namespace IO.Swagger.Controllers
                         }
 
                         DateTime? deliveryTimeUtc = null;
-                        if (!reader.IsDBNull(deliveryTimeOrd))
+                        if (dr["deliveryTime"] != DBNull.Value)
                         {
-                            var deliveryTemp = reader.GetDateTime(deliveryTimeOrd).ToUniversalTime();
+                            var deliveryTemp = ((DateTime)dr["deliveryTime"]).ToUniversalTime();
                             deliveryTimeUtc = new DateTime(
                                 deliveryTemp.Year, deliveryTemp.Month, deliveryTemp.Day,
                                 deliveryTemp.Hour, deliveryTemp.Minute, deliveryTemp.Second,
@@ -363,29 +339,29 @@ namespace IO.Swagger.Controllers
                             );
                         }
 
-                        DateTime? tourStartTimeUtc = !reader.IsDBNull(tourTimeTableStartTimeOrd)
-                            ? reader.GetDateTime(tourTimeTableStartTimeOrd).ToUniversalTime()
+                        DateTime? tourStartTimeUtc = dr["tourTimeTableStartTime"] != DBNull.Value
+                            ? ((DateTime)dr["tourTimeTableStartTime"]).ToUniversalTime()
                             : (DateTime?)null;
 
-                        Availability availability = new Availability()
+                        var availability = new Availability()
                         {
-                            ArticleId = DalOptimized.GetStringOrNull(reader, articleIdOrd),
-                            Quantity = DalOptimized.GetDoubleOrNull(reader, quantityOrd),
-                            BackOrder = DalOptimized.GetBoolOrNull(reader, backOrderOrd),
+                            ArticleId = dr["articleId"] == DBNull.Value ? null : dr["articleId"].ToString(),
+                            Quantity = dr["quantity"] == DBNull.Value ? (double?)null : Convert.ToDouble(dr["quantity"]),
+                            BackOrder = dr["backOrder"] == DBNull.Value ? (bool?)null : Convert.ToBoolean(dr["backOrder"]),
                             CutOffTime = cutOffTimeUtc,
                             DeliveryTime = deliveryTimeUtc,
-                            ImmediateDelivery = DalOptimized.GetBoolOrNull(reader, immediateDeliveryOrd),
-                            StockWarehouse = DalOptimized.GetStringOrNull(reader, stockWarehouseOrd),
-                            DeliveryWarehouse = DalOptimized.GetStringOrNull(reader, deliveryWarehouseOrd),
-                            SendMethod = DalOptimized.GetStringOrNull(reader, sendMethodOrd),
-                            AssignmentPriority = DalOptimized.GetInt64OrNull(reader, assignmentPriorityOrd),
-                            ErrorMessage = DalOptimized.GetStringOrNull(reader, errorMessageOrd),
-                            TourName = DalOptimized.GetStringOrNull(reader, tourNameOrd),
+                            ImmediateDelivery = dr["immediateDelivery"] == DBNull.Value ? (bool?)null : Convert.ToBoolean(dr["immediateDelivery"]),
+                            StockWarehouse = dr["stockWarehouse"] == DBNull.Value ? null : dr["stockWarehouse"].ToString(),
+                            DeliveryWarehouse = dr["deliveryWarehouse"] == DBNull.Value ? null : dr["deliveryWarehouse"].ToString(),
+                            SendMethod = dr["sendMethod"] == DBNull.Value ? null : dr["sendMethod"].ToString(),
+                            AssignmentPriority = dr["assignmentPriority"] == DBNull.Value ? (long?)null : Convert.ToInt64(dr["assignmentPriority"]),
+                            ErrorMessage = dr["errorMessage"] == DBNull.Value ? null : dr["errorMessage"].ToString(),
+                            TourName = dr["tourName"] == DBNull.Value ? null : dr["tourName"].ToString(),
                             TourTimeTable = new List<Tour>()
                             {
                                 new Tour()
                                 {
-                                    TourName = DalOptimized.GetStringOrNull(reader, tourTimeTableTourNameOrd),
+                                    TourName = dr["tourTimeTableTourName"] == DBNull.Value ? null : dr["tourTimeTableTourName"].ToString(),
                                     StartTime = tourStartTimeUtc
                                 }
                             }
