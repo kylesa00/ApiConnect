@@ -15,7 +15,8 @@ using System.Data;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Diagnostics; // ADD THIS
+using System.Diagnostics;
+using Microsoft.AspNetCore.Http; // ADD THIS
 
 namespace IO.Swagger.Controllers
 {
