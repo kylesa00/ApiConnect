@@ -50,11 +50,54 @@ namespace IO.Swagger.Helpers
 
         #endregion WebReference
 
+        /// <summary>
+        /// Sets SQL Server connection options to match SSMS behavior.
+        /// This ensures consistent execution plans and performance.
+        /// </summary>
+        private static async Task SetConnectionOptionsAsync(SqlConnection connection)
+        {
+            using var cmd = new SqlCommand(@"
+                SET ARITHABORT ON;
+                SET ANSI_NULLS ON;
+                SET ANSI_PADDING ON;
+                SET ANSI_WARNINGS ON;
+                SET CONCAT_NULL_YIELDS_NULL ON;
+                SET QUOTED_IDENTIFIER ON;
+                SET NUMERIC_ROUNDABORT OFF;
+            ", connection);
+            
+            await cmd.ExecuteNonQueryAsync();
+        }
+    
+        /// <summary>
+        /// Sets SQL Server connection options to match SSMS behavior (synchronous version).
+        /// This ensures consistent execution plans and performance.
+        /// </summary>      
+        private static void SetConnectionOptions(SqlConnection connection)
+        {
+            using var cmd = new SqlCommand(@"
+                SET ARITHABORT ON;
+                SET ANSI_NULLS ON;
+                SET ANSI_PADDING ON;
+                SET ANSI_WARNINGS ON;
+                SET CONCAT_NULL_YIELDS_NULL ON;
+                SET QUOTED_IDENTIFIER ON;
+                SET NUMERIC_ROUNDABORT OFF;
+            ", connection);
+            
+            cmd.ExecuteNonQuery();
+        }
+
         #region +++++GetDataAsync
         public static async Task<DataSet> GetDataAsync(string spName, List<SqlParameter> spParam)
         {
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
+                await con.OpenAsync();
+                
+                // Set connection options
+                await SetConnectionOptionsAsync(con);
+                
                 SqlDataAdapter da = new SqlDataAdapter(spName, con);
                 da.SelectCommand.CommandType = CommandType.StoredProcedure;
 
@@ -92,6 +135,11 @@ namespace IO.Swagger.Helpers
         {
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
+                con.Open();
+                
+                // Set connection options
+                SetConnectionOptions(con);
+                
                 SqlDataAdapter da = new SqlDataAdapter(spName, con);
                 da.SelectCommand.CommandType = CommandType.StoredProcedure;
 
@@ -131,6 +179,11 @@ namespace IO.Swagger.Helpers
         public static SqlDataReader GetDataReader(string spName, List<SqlParameter> spParam)
         {
             SqlConnection con = new SqlConnection(GetCs());
+            con.Open();
+            
+            // Set connection options
+            SetConnectionOptions(con);
+            
             SqlCommand cmd = new SqlCommand(spName, con);
             cmd.CommandType = CommandType.StoredProcedure;
 
@@ -141,7 +194,6 @@ namespace IO.Swagger.Helpers
                     cmd.Parameters.Add(par);
                 }
             }
-            con.Open();
 
             return cmd.ExecuteReader(CommandBehavior.CloseConnection);
 
@@ -176,6 +228,11 @@ namespace IO.Swagger.Helpers
         {
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
+                con.Open();
+                
+                // Set connection options
+                SetConnectionOptions(con);
+                
                 SqlCommand cmd = new SqlCommand(spName, con);
                 cmd.CommandType = CommandType.StoredProcedure;
                 foreach (SqlParameter par in spParam)
@@ -185,7 +242,6 @@ namespace IO.Swagger.Helpers
                         cmd.Parameters.Add(par);
                     }
                 }
-                con.Open();
                 return (string)cmd.ExecuteScalar();
             }
         }
@@ -212,6 +268,11 @@ namespace IO.Swagger.Helpers
         {
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
+                await con.OpenAsync();
+                
+                // Set connection options
+                await SetConnectionOptionsAsync(con);
+                
                 SqlCommand cmd = new SqlCommand(spName, con);
                 cmd.CommandType = CommandType.StoredProcedure;
 
@@ -219,7 +280,6 @@ namespace IO.Swagger.Helpers
                 {
                     cmd.Parameters.Add(par);
                 }
-                con.Open();
               
                 return (int) await cmd.ExecuteScalarAsync();
             }
@@ -232,6 +292,11 @@ namespace IO.Swagger.Helpers
         {
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
+                con.Open();
+                
+                // Set connection options
+                SetConnectionOptions(con);
+                
                 SqlCommand cmd = new SqlCommand(spName, con);
                 cmd.CommandType = CommandType.StoredProcedure;
 
@@ -239,7 +304,6 @@ namespace IO.Swagger.Helpers
                 {
                     cmd.Parameters.Add(par);
                 }
-                con.Open();
                 return (int)cmd.ExecuteScalar();
             }
         }
@@ -259,10 +323,14 @@ namespace IO.Swagger.Helpers
         {
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
+                con.Open();
+                
+                // Set connection options
+                SetConnectionOptions(con);
+                
                 SqlCommand cmd = new SqlCommand(spName, con);
                 cmd.CommandType = CommandType.StoredProcedure;
 
-                con.Open();
                 cmd.ExecuteNonQuery();
             }
         }
@@ -274,6 +342,10 @@ namespace IO.Swagger.Helpers
             _outParametar_metode = string.Empty;
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
+                con.Open();
+                
+                // Set connection options
+                SetConnectionOptions(con);
 
                 SqlCommand cmd = new SqlCommand(spName, con);
                 cmd.CommandType = CommandType.StoredProcedure;
@@ -283,7 +355,6 @@ namespace IO.Swagger.Helpers
                     cmd.Parameters.Add(par);
                 }
 
-                con.Open();
                 _returnValue_metode = Convert.ToBoolean(cmd.ExecuteScalar());
                 con.Close();
 
@@ -331,6 +402,10 @@ namespace IO.Swagger.Helpers
             _outParametar_metode = string.Empty;
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
+                con.Open();
+                
+                // Set connection options
+                SetConnectionOptions(con);
 
                 SqlCommand cmd = new SqlCommand(spName, con);
                 cmd.CommandType = CommandType.StoredProcedure;
@@ -340,7 +415,6 @@ namespace IO.Swagger.Helpers
                     cmd.Parameters.Add(par);
                 }
 
-                con.Open();
                 _returnValue_metode = Convert.ToInt32(cmd.ExecuteScalar());
                 con.Close();
 

@@ -39,41 +39,18 @@ namespace IO.Swagger.Helpers
         }
         #endregion
 
-        #region GetDataReaderAsync - WITH AD-HOC BATCH OPTIMIZATION
-        /// <summary>
-        /// High-performance async method using ad-hoc batch execution (like SSMS)
-        /// instead of RPC calls. This avoids parameter sniffing and XML Reader overhead.
-        /// </summary>
+        #region GetDataReaderAsync
         public static async Task<SqlDataReader> GetDataReaderAsync(string spName, List<SqlParameter> spParam)
         {
             SqlConnection con = new SqlConnection(GetCs());
             
-            // Check if we're calling GetAvailabilities with TVP - use optimized path
-            bool isAvailabilitiesWithTVP = spName == "GetAvailabilities" && 
-                spParam.Any(p => p.TypeName == "dbo.tyAvailabilityRequest");
-
-            if (isAvailabilitiesWithTVP)
-            {
-                // OPTIMIZATION: Use batch execution instead of RPC
-                return await GetDataReaderAsync_AdHocBatch(con, spName, spParam);
-            }
-            else
-            {
-                // Standard RPC call for other procedures
-                return await GetDataReaderAsync_RPC(con, spName, spParam);
-            }
-        }
-
-        /// <summary>
-        /// Standard RPC execution (original method)
-        /// </summary>
-        private static async Task<SqlDataReader> GetDataReaderAsync_RPC(
-            SqlConnection con, 
-            string spName, 
-            List<SqlParameter> spParam)
-        {
             var connectionTimer = System.Diagnostics.Stopwatch.StartNew();
             await con.OpenAsync();
+            
+            // *** CRITICAL FIX: Set ARITHABORT ON for all connections ***
+            // This matches SSMS behavior and ensures consistent execution plans
+            await SetConnectionOptionsAsync(con);
+            
             connectionTimer.Stop();
             
             var executionTimer = System.Diagnostics.Stopwatch.StartNew();
@@ -93,7 +70,6 @@ namespace IO.Swagger.Helpers
             var reader = await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection);
             executionTimer.Stop();
             
-            // Log the timings (you'll see these in console)
             Console.WriteLine($"[DAL] Connection Open: {connectionTimer.ElapsedMilliseconds}ms");
             Console.WriteLine($"[DAL] ExecuteReader: {executionTimer.ElapsedMilliseconds}ms");
             
@@ -101,56 +77,22 @@ namespace IO.Swagger.Helpers
         }
 
         /// <summary>
-        /// Ad-hoc batch execution (SSMS-style) - MUCH FASTER!
-        /// Avoids RPC overhead and parameter sniffing issues
+        /// Sets SQL Server connection options to match SSMS behavior.
+        /// This ensures consistent execution plans and performance.
         /// </summary>
-        private static async Task<SqlDataReader> GetDataReaderAsync_AdHocBatch(
-            SqlConnection con,
-            string spName,
-            List<SqlParameter> spParam)
+        private static async Task SetConnectionOptionsAsync(SqlConnection connection)
         {
-            // Build the T-SQL batch manually (like SSMS does)
-            var sql = new System.Text.StringBuilder();
+            using var cmd = new SqlCommand(@"
+                SET ARITHABORT ON;
+                SET ANSI_NULLS ON;
+                SET ANSI_PADDING ON;
+                SET ANSI_WARNINGS ON;
+                SET CONCAT_NULL_YIELDS_NULL ON;
+                SET QUOTED_IDENTIFIER ON;
+                SET NUMERIC_ROUNDABORT OFF;
+            ", connection);
             
-            // Declare table variable
-            sql.AppendLine("DECLARE @availabilityRequest dbo.tyAvailabilityRequest;");
-            
-            // Find the TVP parameter
-            var tvpParam = spParam.FirstOrDefault(p => p.TypeName == "dbo.tyAvailabilityRequest");
-            var companyParam = spParam.FirstOrDefault(p => p.ParameterName == "@company");
-            
-            if (tvpParam?.Value is DataTable dt)
-            {
-                // Insert data into table variable
-                foreach (DataRow row in dt.Rows)
-                {
-                    sql.AppendLine($@"INSERT INTO @availabilityRequest VALUES (
-                        '{row["articleId"].ToString().Replace("'", "''")}',
-                        {row["quantity"]},
-                        '{row["customerNr"].ToString().Replace("'", "''")}',
-                        '{row["sendMethod"]?.ToString().Replace("'", "''") ?? ""}',
-                        {((bool)row["partialDelivery"] ? "1" : "0")},
-                        '{row["deliveryAddressId"]?.ToString().Replace("'", "''") ?? ""}',
-                        '{row["pickupBranchId"]?.ToString().Replace("'", "''") ?? ""}',
-                        '{row["pickingWarehouse"]?.ToString().Replace("'", "''") ?? ""}',
-                        {((bool)row["isTourTimetable"] ? "1" : "0")}
-                    );");
-                }
-            }
-            
-            // Call the stored procedure withget fresh plan
-            sql.AppendLine($@"
-EXEC {spName} 
-    @company = '{companyParam?.Value.ToString().Replace("'", "''")}',
-    @availabilityRequest = @availabilityRequest;");
-
-            // Execute as ad-hoc batch (like SSMS)
-            SqlCommand cmd = new SqlCommand(sql.ToString(), con);
-            cmd.CommandType = CommandType.Text;  // ← KEY DIFFERENCE: Text, not StoredProcedure
-            cmd.CommandTimeout = 120;
-
-            await con.OpenAsync();
-            return await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection);
+            await cmd.ExecuteNonQueryAsync();
         }
 
         public static async Task<SqlDataReader> GetDataReaderAsync(string spName, SqlParameter spParam)
@@ -165,7 +107,59 @@ EXEC {spName}
         }
         #endregion
 
-        #region Helper Methods (unchanged)
+        #region GetDataAsync (For backward compatibility)
+        public static async Task<DataSet> GetDataAsync(string spName, List<SqlParameter> spParam)
+        {
+            using (SqlConnection con = new SqlConnection(GetCs()))
+            {
+                await con.OpenAsync();
+                
+                // Set connection options
+                await SetConnectionOptionsAsync(con);
+                
+                using (SqlCommand cmd = new SqlCommand(spName, con))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.CommandTimeout = 120;
+
+                    foreach (SqlParameter par in spParam)
+                    {
+                        if (par.Value != null)
+                        {
+                            cmd.Parameters.Add(par);
+                        }
+                    }
+
+                    DataSet ds = new DataSet();
+                    
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        do
+                        {
+                            DataTable dt = new DataTable();
+                            dt.Load(reader);
+                            ds.Tables.Add(dt);
+                        } while (!reader.IsClosed);
+                    }
+                    
+                    return ds;
+                }
+            }
+        }
+
+        public static async Task<DataSet> GetDataAsync(string spName, SqlParameter spParam)
+        {
+            List<SqlParameter> parList = new List<SqlParameter>() { spParam };
+            return await GetDataAsync(spName, parList);
+        }
+
+        public static async Task<DataSet> GetDataAsync(string spName)
+        {
+            return await GetDataAsync(spName, new List<SqlParameter>());
+        }
+        #endregion
+
+        #region Helper Methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string GetStringOrNull(SqlDataReader reader, int ordinal)
         {
@@ -262,6 +256,30 @@ EXEC {spName}
                 return (decimal)floatValue;
             
             return Convert.ToDecimal(value);
+        }
+        #endregion
+
+        #region ExecSpAsync
+        public static async Task<int> ExecSpAsync(string spName, List<SqlParameter> spParam)
+        {
+            using (SqlConnection con = new SqlConnection(GetCs()))
+            {
+                await con.OpenAsync();
+                
+                // Set connection options
+                await SetConnectionOptionsAsync(con);
+                
+                SqlCommand cmd = new SqlCommand(spName, con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandTimeout = 120;
+
+                foreach (SqlParameter par in spParam)
+                {
+                    cmd.Parameters.Add(par);
+                }
+              
+                return (int) await cmd.ExecuteScalarAsync();
+            }
         }
         #endregion
     }
