@@ -72,6 +72,12 @@ namespace IO.Swagger.Helpers
             string spName, 
             List<SqlParameter> spParam)
         {
+            var connectionTimer = System.Diagnostics.Stopwatch.StartNew();
+            await con.OpenAsync();
+            connectionTimer.Stop();
+            
+            var executionTimer = System.Diagnostics.Stopwatch.StartNew();
+            
             SqlCommand cmd = new SqlCommand(spName, con);
             cmd.CommandType = CommandType.StoredProcedure;
             cmd.CommandTimeout = 120;
@@ -84,8 +90,14 @@ namespace IO.Swagger.Helpers
                 }
             }
 
-            await con.OpenAsync();
-            return await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection);
+            var reader = await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection);
+            executionTimer.Stop();
+            
+            // Log the timings (you'll see these in console)
+            Console.WriteLine($"[DAL] Connection Open: {connectionTimer.ElapsedMilliseconds}ms");
+            Console.WriteLine($"[DAL] ExecuteReader: {executionTimer.ElapsedMilliseconds}ms");
+            
+            return reader;
         }
 
         /// <summary>
