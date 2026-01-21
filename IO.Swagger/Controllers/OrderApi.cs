@@ -35,6 +35,13 @@ namespace IO.Swagger.Controllers
     [ApiController]
     public class OrderApiController : ControllerBase
     {
+        private readonly Dal _dal;
+
+        public OrderApiController(Dal dal)
+        {
+            _dal = dal;
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -79,7 +86,7 @@ namespace IO.Swagger.Controllers
             Dictionary<string, LinkEntry> links;
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetOrdersOfCustomer", param);
+                DataSet ds = await _dal.GetDataAsync("GetOrdersOfCustomer", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
@@ -185,7 +192,7 @@ namespace IO.Swagger.Controllers
 
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetBasketHistory", param);
+                DataSet ds = await _dal.GetDataAsync("GetBasketHistory", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
@@ -262,7 +269,7 @@ namespace IO.Swagger.Controllers
 
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetOrderPosition", param);
+                DataSet ds = await _dal.GetDataAsync("GetOrderPosition", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     Dictionary<string, LinkEntry> link = new Dictionary<string, LinkEntry>() {
@@ -336,7 +343,7 @@ namespace IO.Swagger.Controllers
 
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetOrderPositions", param);
+                DataSet ds = await _dal.GetDataAsync("GetOrderPositions", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
@@ -501,7 +508,7 @@ namespace IO.Swagger.Controllers
             };
             try
             {
-                if (!Convert.ToBoolean(await Dal.ExecSpAsync("ChangeOrderProcessStatus", param)))
+                if (!Convert.ToBoolean(await _dal.ExecSpAsync("ChangeOrderProcessStatus", param)))
                 {
                     ObjectResult objectResult = new ObjectResult(new OrderProcessStatusConfirmation() { ProcessStatusChanged = true });
                     objectResult.StatusCode = 202;
@@ -742,7 +749,7 @@ namespace IO.Swagger.Controllers
             bool isOk = false;
             string errorMessage = string.Empty;
 
-           Helpers.NavWebServiceReference navWebServiceReference = Dal.GetNavWebReference();
+           Helpers.NavWebServiceReference navWebServiceReference = _dal.GetNavWebReference();
 
             try
             {              
@@ -862,7 +869,7 @@ namespace IO.Swagger.Controllers
             {
                 return StatusCode(400, (new ErrorInfo()
                 {
-                    ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
+                    ErrorOrigin = ErrorInfo.ErrorOriginEnum,
                     ErrorMessage = "Company not found"
                 }));
             }
@@ -921,7 +928,7 @@ namespace IO.Swagger.Controllers
             links = UrlTool.ParseLinks(links);
             try
             {
-                DataSet ds = await Dal.GetDataAsync("CreateShoppingBasket", param);
+                DataSet ds = await _dal.GetDataAsync("CreateShoppingBasket", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
