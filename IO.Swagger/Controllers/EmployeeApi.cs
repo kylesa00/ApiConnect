@@ -34,6 +34,12 @@ namespace IO.Swagger.Controllers
     [ApiController]
     public class EmployeeApiController : ControllerBase
     {
+        private readonly Dal _dal;
+
+        public EmployeeApiController(Dal dal)
+        {
+            _dal = dal;
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -71,7 +77,7 @@ namespace IO.Swagger.Controllers
 
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetEmployeeByNr", param);
+                DataSet ds = await _dal.GetDataAsync("GetEmployeeByNr", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
@@ -169,7 +175,7 @@ namespace IO.Swagger.Controllers
 
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetEmployees", param);
+                DataSet ds = await _dal.GetDataAsync("GetEmployees", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)

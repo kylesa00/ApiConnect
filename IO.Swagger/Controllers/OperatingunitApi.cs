@@ -16,6 +16,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using IO.Swagger.Attributes;
+using IO.Swagger.Helpers;
 
 using Microsoft.AspNetCore.Authorization;
 using IO.Swagger.Models;
@@ -29,6 +30,8 @@ namespace IO.Swagger.Controllers
     [ApiExplorerSettings(IgnoreApi = true)]
     public class OperatingunitApiController : ControllerBase
     { 
+        private readonly Dal _dal;
+
         /// <summary>
         /// 
         /// </summary>

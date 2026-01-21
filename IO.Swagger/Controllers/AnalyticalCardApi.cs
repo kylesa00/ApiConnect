@@ -32,6 +32,12 @@ namespace IO.Swagger.Controllers
     [ApiController]
     public class AnalyticalCardApiController : ControllerBase
     {
+        private readonly Dal _dal;
+
+        public AnalyticalCardApiController(Dal dal)
+        {
+            _dal = dal;
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -72,7 +78,7 @@ namespace IO.Swagger.Controllers
 
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetAnalyticalCard_UsedCreditLimit", param);
+                DataSet ds = await _dal.GetDataAsync("GetAnalyticalCard_UsedCreditLimit", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     usedCreitLimit = new UsedCreditLimit()
@@ -146,7 +152,7 @@ namespace IO.Swagger.Controllers
 
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetAnalyticalCard_Entries", param);
+                DataSet ds = await _dal.GetDataAsync("GetAnalyticalCard_Entries", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
@@ -269,7 +275,7 @@ namespace IO.Swagger.Controllers
                      { "self", new LinkEntry(Request.Path.ToString() + Request.QueryString.ToString()) } };
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetAnalyticalCard_Document", param);
+                DataSet ds = await _dal.GetDataAsync("GetAnalyticalCard_Document", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     entry = new Entry()

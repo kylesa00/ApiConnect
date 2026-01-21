@@ -33,6 +33,12 @@ namespace IO.Swagger.Controllers
     [ApiController]
     public class ArticleApiController : ControllerBase
     {
+        private readonly Dal _dal;
+
+        public ArticleApiController(Dal dal)
+        {
+            _dal = dal;
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -72,7 +78,7 @@ namespace IO.Swagger.Controllers
             links = UrlTool.ParseLinks(links);
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetArticles", param);
+                DataSet ds = await _dal.GetDataAsync("GetArticles", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
 
@@ -164,7 +170,7 @@ namespace IO.Swagger.Controllers
             Dictionary<string, LinkEntry> links;
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetArticleById", param);
+                DataSet ds = await _dal.GetDataAsync("GetArticleById", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     links = new Dictionary<string, LinkEntry>() {
@@ -242,7 +248,7 @@ namespace IO.Swagger.Controllers
 
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetArticleStocks", param);
+                DataSet ds = await _dal.GetDataAsync("GetArticleStocks", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
@@ -343,7 +349,7 @@ namespace IO.Swagger.Controllers
             links = UrlTool.ParseLinks(links);
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetArticleStockById", param);
+                DataSet ds = await _dal.GetDataAsync("GetArticleStockById", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
@@ -421,7 +427,7 @@ namespace IO.Swagger.Controllers
             links = UrlTool.ParseLinks(links);
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetArticleStocksSum", param);
+                DataSet ds = await _dal.GetDataAsync("GetArticleStocksSum", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
@@ -497,7 +503,7 @@ namespace IO.Swagger.Controllers
             };
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetArticleVendors", param);
+                DataSet ds = await _dal.GetDataAsync("GetArticleVendors", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
@@ -578,7 +584,7 @@ namespace IO.Swagger.Controllers
             VendorStocks vendorStocks = new VendorStocks();
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetVendorStocks", param);
+                DataSet ds = await _dal.GetDataAsync("GetVendorStocks", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
@@ -670,7 +676,7 @@ namespace IO.Swagger.Controllers
 
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetArticlePrices", param);
+                DataSet ds = await _dal.GetDataAsync("GetArticlePrices", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
@@ -778,7 +784,7 @@ namespace IO.Swagger.Controllers
 
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetArticlePricesForExternalLocationOrdering", param);
+                DataSet ds = await _dal.GetDataAsync("GetArticlePricesForExternalLocationOrdering", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
@@ -890,7 +896,7 @@ namespace IO.Swagger.Controllers
 
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetAvailabilities", param);
+                DataSet ds = await _dal.GetDataAsync("GetAvailabilities", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)

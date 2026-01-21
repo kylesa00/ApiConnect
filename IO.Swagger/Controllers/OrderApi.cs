@@ -869,7 +869,7 @@ namespace IO.Swagger.Controllers
             {
                 return StatusCode(400, (new ErrorInfo()
                 {
-                    ErrorOrigin = ErrorInfo.ErrorOriginEnum,
+                    ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
                     ErrorMessage = "Company not found"
                 }));
             }
