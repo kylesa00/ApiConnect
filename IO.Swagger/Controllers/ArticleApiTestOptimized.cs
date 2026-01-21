@@ -24,6 +24,7 @@ namespace IO.Swagger.Controllers
     [Route("/apps/prod-webshop-service-app/webshop-service/test-optimized")]
     public class ArticleApiTestOptimizedController : ControllerBase
     {
+        private readonly Dal _dal;
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -31,6 +32,11 @@ namespace IO.Swagger.Controllers
             WriteIndented = false,
             PropertyNameCaseInsensitive = true
         };
+
+        public ArticleApiTestOptimizedController(Dal dal)
+        {
+            _dal = dal;
+        }
 
         /// <summary>
         /// OPTIMIZED VERSION with System.Text.Json + SERVER TIMING
@@ -457,7 +463,7 @@ namespace IO.Swagger.Controllers
             try
             {
                 dbTimer.Start();
-                DataSet ds = await Dal.GetDataAsync("GetAvailabilities", param);
+                DataSet ds = await _dal.GetDataAsync("GetAvailabilities", param);
                 dbTimer.Stop();
 
                 if (ds.Tables[0].Rows.Count > 0)

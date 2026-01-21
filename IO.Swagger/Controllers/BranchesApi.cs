@@ -16,11 +16,11 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using IO.Swagger.Attributes;
+using IO.Swagger.Helpers;
 
 using Microsoft.AspNetCore.Authorization;
 using IO.Swagger.Models;
 using Microsoft.Data.SqlClient;
-using IO.Swagger.Helpers;
 using System.Data;
 using System.Threading.Tasks;
 using Google.Protobuf.Collections;
@@ -33,6 +33,12 @@ namespace IO.Swagger.Controllers
     [ApiController]
     public class BranchesApiController : ControllerBase
     {
+        private readonly Dal _dal;
+
+        public BranchesApiController(Dal dal)
+        {
+            _dal = dal;
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -71,7 +77,7 @@ namespace IO.Swagger.Controllers
 
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetBranchById", param);
+                DataSet ds = await _dal.GetDataAsync("GetBranchById", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     branch = new Branch()
@@ -130,7 +136,7 @@ namespace IO.Swagger.Controllers
             Dictionary<string, LinkEntry> links;
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetBranches", param);
+                DataSet ds = await _dal.GetDataAsync("GetBranches", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
@@ -202,7 +208,7 @@ namespace IO.Swagger.Controllers
             Dictionary<string, LinkEntry> links;
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetNextWorkingDate", param);
+                DataSet ds = await _dal.GetDataAsync("GetNextWorkingDate", param);
                 if (ds.Tables[0].Rows.Count == 0)
                     return StatusCode(404, (new ErrorInfo()
                     {

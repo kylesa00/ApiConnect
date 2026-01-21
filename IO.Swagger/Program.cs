@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using IO.Swagger.Filters;
+using IO.Swagger.Helpers;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,11 +56,18 @@ builder.Services
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
+// Register Dal as a scoped service for DI
+builder.Services.AddScoped<Dal>();
+
+// Register NavWebServiceReferenceOptions for DI
+builder.Services.Configure<NavWebServiceReferenceOptions>(
+    builder.Configuration.GetSection("WebServiceReference"));
+
 // Configure IIS Server options (only needed when hosting in IIS)
-builder.Services.Configure<IISServerOptions>(options => 
-{ 
-    options.AllowSynchronousIO = true; 
-});
+//builder.Services.Configure<IISServerOptions>(options => 
+//{ 
+//    options.AllowSynchronousIO = true; 
+//});
 
 var app = builder.Build();
 

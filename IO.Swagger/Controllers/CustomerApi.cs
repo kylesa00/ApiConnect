@@ -44,6 +44,12 @@ namespace IO.Swagger.Controllers
     [ApiController]
     public class CustomerApiController : ControllerBase
     {
+        private readonly Dal _dal;
+
+        public CustomerApiController(Dal dal)
+        {
+            _dal = dal;
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -82,7 +88,7 @@ namespace IO.Swagger.Controllers
             Dictionary<string, LinkEntry> links;
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetAddressById", param);
+                DataSet ds = await _dal.GetDataAsync("GetAddressById", param);
 
                 if (ds.Tables[0].Rows.Count > 0)
                 {
@@ -178,7 +184,7 @@ namespace IO.Swagger.Controllers
             links = UrlTool.ParseLinks(links);
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetAddressesOfCustomer", param);
+                DataSet ds = await _dal.GetDataAsync("GetAddressesOfCustomer", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     foreach (DataRow dr in ds.Tables[0].Rows)
@@ -264,7 +270,7 @@ namespace IO.Swagger.Controllers
             CreditLimit creditLimit;
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetCreditLimit", param);
+                DataSet ds = await _dal.GetDataAsync("GetCreditLimit", param);
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     creditLimit = new CreditLimit()
@@ -326,7 +332,7 @@ namespace IO.Swagger.Controllers
             Dictionary<string, LinkEntry> links;
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetCustomerByNr", param);
+                DataSet ds = await _dal.GetDataAsync("GetCustomerByNr", param);
 
                 if (ds.Tables[0].Rows.Count > 0)
                 {
@@ -482,7 +488,7 @@ namespace IO.Swagger.Controllers
 
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetCourierServices", param);                
+                DataSet ds = await _dal.GetDataAsync("GetCourierServices", param);                
 
                 if (ds.Tables[0].Rows.Count > 0)
                 {
@@ -547,7 +553,7 @@ namespace IO.Swagger.Controllers
 
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetCustomerTours", param);
+                DataSet ds = await _dal.GetDataAsync("GetCustomerTours", param);
 
                 if (ds.Tables[0].Rows.Count > 0)
                 {
@@ -617,7 +623,7 @@ namespace IO.Swagger.Controllers
             List<CustomerDetails> customersDetails;
             try
             {
-                DataSet ds = await Dal.GetDataAsync("GetCustomers", param);
+                DataSet ds = await _dal.GetDataAsync("GetCustomers", param);
 
                 if (ds.Tables[0].Rows.Count > 0)
                 {

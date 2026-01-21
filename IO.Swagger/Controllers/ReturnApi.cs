@@ -16,6 +16,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using IO.Swagger.Attributes;
+using IO.Swagger.Helpers;
 
 using Microsoft.AspNetCore.Authorization;
 using IO.Swagger.Models;
@@ -29,6 +30,13 @@ namespace IO.Swagger.Controllers
     [ApiExplorerSettings(IgnoreApi = true)]
     public class ReturnApiController : ControllerBase
     { 
+        private readonly Dal _dal;
+
+        public ReturnApiController(Dal dal)
+        {
+            _dal = dal;
+        }
+        
         /// <summary>
         /// 
         /// </summary>

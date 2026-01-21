@@ -1,60 +1,55 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Data;
-//using Microsoft.Data.SqlClient;
-using Microsoft.Data.SqlClient;
+//using System.Data.SqlClient;
 using System.IO;
 using System.Threading.Tasks;
 
 namespace IO.Swagger.Helpers
 {
-    public class NavWebServiceReference 
+    public class NavWebServiceReference
     {
         public string Url;
         public string Domain;
         public string UserName;
-        public string Password;     
+        public string Password;
     }
     public class Dal
     {
-        #region Cs
-        //public static string cs = @"Server=NAVSRV-BG-01\SQL2012;Initial Catalog=WagenInternational_NAV_Connect_Integration;User ID=sqlHellper4ApiConnect;Password=sqlH#llp#r4@p!C0nn#ct";
+        private readonly string _connectionString;
+        private readonly NavWebServiceReference _navWebServiceReference;
 
-        public static string GetCs()
+        public Dal(IConfiguration configuration, IOptions<NavWebServiceReferenceOptions> navWebServiceReferenceOptions)
         {
-            var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true);
-            var configuation = builder.Build();
-            return configuation.GetSection("ConnectionStrings").GetSection("NavConnectionString").Value;
+            _connectionString = configuration.GetSection("ConnectionStrings:NavConnectionString").Value;
+            var opts = navWebServiceReferenceOptions.Value;
+            _navWebServiceReference = new NavWebServiceReference
+            {
+                Url = opts.NavWebServiceReference,
+                Domain = opts.Domain,
+                UserName = opts.UserName,
+                Password = opts.Password
+            };
+        }
+
+        #region Cs
+        public string GetCs()
+        {
+            return _connectionString;
         }
         #endregion Cs
 
         #region WebReference
-        public static NavWebServiceReference GetNavWebReference()
+        public NavWebServiceReference GetNavWebReference()
         {
-            var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-            var configuation = builder.Build();
-
-            return new NavWebServiceReference()
-            {
-                Url = configuation.GetSection("WebServiceReference").GetSection("NavWebServiceReference").Value,
-                Domain = configuation.GetSection("WebServiceReference").GetSection("Domain").Value,
-                UserName = configuation.GetSection("WebServiceReference").GetSection("UserName").Value,
-                Password = configuation.GetSection("WebServiceReference").GetSection("Password").Value,
-            };
+            return _navWebServiceReference;
         }
-
         #endregion WebReference
 
-        /// <summary>
-        /// Sets SQL Server connection options to match SSMS behavior.
-        /// This ensures consistent execution plans and performance.
-        /// </summary>
-        private static async Task SetConnectionOptionsAsync(SqlConnection connection)
+        private async Task SetConnectionOptionsAsync(SqlConnection connection)
         {
             using var cmd = new SqlCommand(@"
                 SET ARITHABORT ON;
@@ -65,15 +60,11 @@ namespace IO.Swagger.Helpers
                 SET QUOTED_IDENTIFIER ON;
                 SET NUMERIC_ROUNDABORT OFF;
             ", connection);
-            
+
             await cmd.ExecuteNonQueryAsync();
         }
-    
-        /// <summary>
-        /// Sets SQL Server connection options to match SSMS behavior (synchronous version).
-        /// This ensures consistent execution plans and performance.
-        /// </summary>      
-        private static void SetConnectionOptions(SqlConnection connection)
+
+        private void SetConnectionOptions(SqlConnection connection)
         {
             using var cmd = new SqlCommand(@"
                 SET ARITHABORT ON;
@@ -84,65 +75,84 @@ namespace IO.Swagger.Helpers
                 SET QUOTED_IDENTIFIER ON;
                 SET NUMERIC_ROUNDABORT OFF;
             ", connection);
-            
+
             cmd.ExecuteNonQuery();
         }
 
         #region +++++GetDataAsync
-        public static async Task<DataSet> GetDataAsync(string spName, List<SqlParameter> spParam)
+        //public async Task<DataSet> GetDataAsync(string spName, List<SqlParameter> spParam)
+        //{
+        //    using (SqlConnection con = new SqlConnection(GetCs()))
+        //    {
+        //        await con.OpenAsync();
+        //        await SetConnectionOptionsAsync(con);
+        //        SqlDataAdapter da = new SqlDataAdapter(spName, con);
+        //        da.SelectCommand.CommandType = CommandType.StoredProcedure;
+        //        foreach (SqlParameter par in spParam)
+        //        {
+        //            if (par.Value != null)
+        //            {
+        //                da.SelectCommand.Parameters.Add(par);
+        //            }
+        //        }
+        //        DataSet ds = new DataSet();
+        //        await Task.Run(() => da.Fill(ds));
+        //        return ds;
+        //    }
+        //}
+
+        public async Task<DataSet> GetDataAsync(string spName, List<SqlParameter> spParam)
         {
-            using (SqlConnection con = new SqlConnection(GetCs()))
+            var ds = new DataSet();
+            using (var con = new SqlConnection(GetCs()))
             {
                 await con.OpenAsync();
-                
-                // Set connection options
                 await SetConnectionOptionsAsync(con);
-                
-                SqlDataAdapter da = new SqlDataAdapter(spName, con);
-                da.SelectCommand.CommandType = CommandType.StoredProcedure;
-
-                foreach (SqlParameter par in spParam)
+                using (var cmd = new SqlCommand(spName, con))
                 {
-                    if (par.Value != null)
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    foreach (var par in spParam)
                     {
-                        da.SelectCommand.Parameters.Add(par);
+                        if (par.Value != null)
+                            cmd.Parameters.Add(par);
+                    }
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        do
+                        {
+                            var dt = new DataTable();
+                            dt.Load(reader); // Loads current result set
+                            ds.Tables.Add(dt);
+                        } while (!reader.IsClosed && reader.NextResult());
                     }
                 }
-                DataSet ds = new DataSet();
-                await Task.Run(() => da.Fill(ds));
-                return ds;
             }
+            return ds;
         }
 
-        public static async Task<DataSet> GetDataAsync(string spName, SqlParameter spParam)
+        public async Task<DataSet> GetDataAsync(string spName, SqlParameter spParam)
         {
-            List<SqlParameter> parList = new List<SqlParameter>()
-             {
-                 spParam
-             };
+            List<SqlParameter> parList = new List<SqlParameter>();
+            parList.Add(spParam);
 
             return await GetDataAsync(spName, parList);
         }
 
-        public static async Task<DataSet> GetDataAsync(string spName)
+        public async Task<DataSet> GetDataAsync(string spName)
         {
             return await GetDataAsync(spName, new SqlParameter(null, null));
         }
         #endregion
 
         #region GetData
-        public static DataSet GetData(string spName, List<SqlParameter> spParam)
+        public DataSet GetData(string spName, List<SqlParameter> spParam)
         {
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
                 con.Open();
-                
-                // Set connection options
                 SetConnectionOptions(con);
-                
                 SqlDataAdapter da = new SqlDataAdapter(spName, con);
                 da.SelectCommand.CommandType = CommandType.StoredProcedure;
-
                 foreach (SqlParameter par in spParam)
                 {
                     if (par.Value != null)
@@ -156,37 +166,29 @@ namespace IO.Swagger.Helpers
             }
         }
 
-        public static DataSet GetData(string spName, SqlParameter spParam)
+        public DataSet GetData(string spName, SqlParameter spParam)
         {
             List<SqlParameter> parList = new List<SqlParameter>()
              {
                  spParam
              };
-
             return GetData(spName, parList);
         }
 
-        public static DataSet GetData(string spName)
+        public DataSet GetData(string spName)
         {
             return GetData(spName, new SqlParameter(null, null));
         }
-
         #endregion GetData
 
         #region GetDataReader
-        //metoda za izvlacenje podataka iz baze sa parametrom, vraca datareader
-        //(za razliku od predhodne da mozes dodeliti odredjenu vrednost odredjenoj kontroli)
-        public static SqlDataReader GetDataReader(string spName, List<SqlParameter> spParam)
+        public SqlDataReader GetDataReader(string spName, List<SqlParameter> spParam)
         {
             SqlConnection con = new SqlConnection(GetCs());
             con.Open();
-            
-            // Set connection options
             SetConnectionOptions(con);
-            
             SqlCommand cmd = new SqlCommand(spName, con);
             cmd.CommandType = CommandType.StoredProcedure;
-
             foreach (SqlParameter par in spParam)
             {
                 if (par.Value != null)
@@ -194,45 +196,29 @@ namespace IO.Swagger.Helpers
                     cmd.Parameters.Add(par);
                 }
             }
-
             return cmd.ExecuteReader(CommandBehavior.CloseConnection);
-
-            //ovako se poziva i koristi
-
-            //SqlDataReader dr = adoMetode.GetDataReader("p_dajPrijavu_zaIdP", new SqlParameter("@IdP", e.CommandArgument.ToString()));
-            //while (dr.Read()){
-            //    lblOpisP.Text = dr["NaslovP"].ToString();
-
-            //}
-            //dr.Close();
         }
-        public static SqlDataReader GetDataReader(string spName, SqlParameter spParam)
+        public SqlDataReader GetDataReader(string spName, SqlParameter spParam)
         {
             List<SqlParameter> parList = new List<SqlParameter>()
              {
                  spParam
              };
-
             return GetDataReader(spName, parList);
         }
-        //isto samo bez parametara
-        public static SqlDataReader GetDataReader(string spName)
+        public SqlDataReader GetDataReader(string spName)
         {
             return GetDataReader(spName, new SqlParameter(null, null));
         }
-
         #endregion GetDataReader
 
         #region GetValue
-        public static string GetValue(string spName, List<SqlParameter> spParam)
+        public string GetValue(string spName, List<SqlParameter> spParam)
         {
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
                 con.Open();
-                
-                // Set connection options
                 SetConnectionOptions(con);
-                
                 SqlCommand cmd = new SqlCommand(spName, con);
                 cmd.CommandType = CommandType.StoredProcedure;
                 foreach (SqlParameter par in spParam)
@@ -246,60 +232,48 @@ namespace IO.Swagger.Helpers
             }
         }
 
-        public static string GetValue(string spName, SqlParameter spParam)
+        public string GetValue(string spName, SqlParameter spParam)
         {
             List<SqlParameter> parList = new List<SqlParameter>()
              {
                  spParam
              };
-
             return GetValue(spName, parList);
         }
 
-        public static string GetValue(string spName)
+        public string GetValue(string spName)
         {
             return GetValue(spName, new SqlParameter(null, null));
         }
         #endregion GetValue
 
         #region ++++++ExecSp
-        //metoda za izvrsavanje stored procedura za listu parametara
-        public static async Task<int> ExecSpAsync(string spName, List<SqlParameter> spParam)
+        public async Task<int> ExecSpAsync(string spName, List<SqlParameter> spParam)
         {
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
                 await con.OpenAsync();
-                
-                // Set connection options
                 await SetConnectionOptionsAsync(con);
-                
                 SqlCommand cmd = new SqlCommand(spName, con);
                 cmd.CommandType = CommandType.StoredProcedure;
-
                 foreach (SqlParameter par in spParam)
                 {
                     cmd.Parameters.Add(par);
                 }
-              
-                return (int) await cmd.ExecuteScalarAsync();
+                return (int)await cmd.ExecuteScalarAsync();
             }
         }
         #endregion 
 
         #region ExecSp
-        //metoda za izvrsavanje stored procedura za listu parametara
-        public static int ExecSp(string spName, List<SqlParameter> spParam)
+        public int ExecSp(string spName, List<SqlParameter> spParam)
         {
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
                 con.Open();
-                
-                // Set connection options
                 SetConnectionOptions(con);
-                
                 SqlCommand cmd = new SqlCommand(spName, con);
                 cmd.CommandType = CommandType.StoredProcedure;
-
                 foreach (SqlParameter par in spParam)
                 {
                     cmd.Parameters.Add(par);
@@ -308,8 +282,7 @@ namespace IO.Swagger.Helpers
             }
         }
 
-        //metoda za izvrsavanje stored procedura za parametar
-        public static int ExecSp(string spName, SqlParameter spParam)
+        public int ExecSp(string spName, SqlParameter spParam)
         {
             List<SqlParameter> parList = new List<SqlParameter>()
              {
@@ -318,47 +291,35 @@ namespace IO.Swagger.Helpers
             return ExecSp(spName, parList);
         }
 
-        //metoda za izvrsavanje stored procedura bez parametra
-        public static void ExecSp(string spName)
+        public void ExecSp(string spName)
         {
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
                 con.Open();
-                
-                // Set connection options
                 SetConnectionOptions(con);
-                
                 SqlCommand cmd = new SqlCommand(spName, con);
                 cmd.CommandType = CommandType.StoredProcedure;
-
                 cmd.ExecuteNonQuery();
             }
         }
 
-        //metoda za izvrsavanje stored procedura za listu parametara sa output parametrom
-        public static bool ExecSp(string spName, List<SqlParameter> spParam, out string _outParametar_metode)
+        public bool ExecSp(string spName, List<SqlParameter> spParam, out string _outParametar_metode)
         {
             bool _returnValue_metode = false;
             _outParametar_metode = string.Empty;
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
                 con.Open();
-                
-                // Set connection options
                 SetConnectionOptions(con);
-
                 SqlCommand cmd = new SqlCommand(spName, con);
                 cmd.CommandType = CommandType.StoredProcedure;
-
                 foreach (SqlParameter par in spParam)
                 {
                     cmd.Parameters.Add(par);
                 }
-
                 _returnValue_metode = Convert.ToBoolean(cmd.ExecuteScalar());
                 con.Close();
-
-                foreach (SqlParameter _pa in cmd.Parameters)    //nadji u listi parametara, sql Output parametar, i dodeli ga out parametru metode
+                foreach (SqlParameter _pa in cmd.Parameters)
                 {
                     if (_pa.Direction == ParameterDirection.Output)
                     {
@@ -367,58 +328,26 @@ namespace IO.Swagger.Helpers
                     }
                 }
             }
-
             return _returnValue_metode;
-            //ovako se poziva i koristi
-            //protected void daj()
-            //{
-            //    List<SqlParameter> param = new List<SqlParameter>()
-            //        {
-            //            new SqlParameter(){
-            //                ParameterName="@IdP",
-            //                Value = Label1.Text
-            //            },
-            //           new SqlParameter() {
-            //                ParameterName = "@spOutParam",
-            //                Direction = ParameterDirection.Output,
-            //                SqlDbType = SqlDbType.VarChar,
-            //                Size = 20
-            //                }
-            //};
-
-            //------------------------------------------------------------------------------
-            //    string aaa = string.Empty;
-            //    adoMetode.ExecSp("p_r_test1", param, out aaa);
-
-            //    Response.Write(aaa);
-            //}
-
-            //------------------------------------------------------------------------------------------------------------------------------
         }
 
-        public static int ExecSp2(string spName, List<SqlParameter> spParam, out string _outParametar_metode)
+        public int ExecSp2(string spName, List<SqlParameter> spParam, out string _outParametar_metode)
         {
             int _returnValue_metode;
             _outParametar_metode = string.Empty;
             using (SqlConnection con = new SqlConnection(GetCs()))
             {
                 con.Open();
-                
-                // Set connection options
                 SetConnectionOptions(con);
-
                 SqlCommand cmd = new SqlCommand(spName, con);
                 cmd.CommandType = CommandType.StoredProcedure;
-
                 foreach (SqlParameter par in spParam)
                 {
                     cmd.Parameters.Add(par);
                 }
-
                 _returnValue_metode = Convert.ToInt32(cmd.ExecuteScalar());
                 con.Close();
-
-                foreach (SqlParameter _pa in cmd.Parameters)    //nadji u listi parametara, sql Output parametar, i dodeli ga out parametru metode
+                foreach (SqlParameter _pa in cmd.Parameters)
                 {
                     if (_pa.Direction == ParameterDirection.Output)
                     {
@@ -427,11 +356,10 @@ namespace IO.Swagger.Helpers
                     }
                 }
             }
-
             return _returnValue_metode;
         }
-
         #endregion ExecSp
-      
+
+
     }
 }
