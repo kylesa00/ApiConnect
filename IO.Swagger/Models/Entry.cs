@@ -105,6 +105,7 @@ namespace IO.Swagger.Models
         /// **prev (GET)**: The &#x60;prev&#x60; link is present, if more recent orders than returned ones exit. This link repeats query parameters, which are provided in original request. That way, clients don&#39;t need to construct URIs themselves to get the batch of previous orders.
         /// </summary>
         /// <value>Map of links, which makes URIs to other resources available through symbolic names. The following table lists possible mappings: +  +  **self (GET)**: The link to list of orders representation itself. Following this link returns the very same order list representation. +  +  **next (GET)**: The &#x60;next&#x60; link is present, if older orders than returned ones exist. This link repeats query parameters, which are provided in original request. That way, clients do not need to construct URIs themselves to get the batch of next orders. +  +  **prev (GET)**: The &#x60;prev&#x60; link is present, if more recent orders than returned ones exit. This link repeats query parameters, which are provided in original request. That way, clients don&#39;t need to construct URIs themselves to get the batch of previous orders.</value>
+        [System.Xml.Serialization.XmlIgnore]
         [Required]
         [DataMember(Name = "_links")]
         public Dictionary<string, LinkEntry> Links { get; set; }

@@ -109,6 +109,7 @@ namespace IO.Swagger.Models
         /// Map of links, which makes URIs to other resources available through symbolic names. The following table lists possible links: +  +  **self (GET)**: The link to article representation itself. Following this link returns representation of very same article resource.  +  **collection/stock (GET)**: Following this link with a GET request, results in a list of the article stock per branch. +           
         /// </summary>
         /// <value>Map of links, which makes URIs to other resources available through symbolic names. The following table lists possible links: +  +  **self (GET)**: The link to article representation itself. Following this link returns representation of very same article resource.  +  **collection/stock (GET)**: Following this link with a GET request, results in a list of the article stock per branch. +           </value>
+        [System.Xml.Serialization.XmlIgnore]
         [Required]
         [DataMember(Name="_links")]
         public Dictionary<string, LinkEntry> Links { get; set; }

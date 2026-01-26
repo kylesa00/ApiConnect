@@ -106,6 +106,7 @@ namespace IO.Swagger.Models
         /// Map of links which makes URIs to other resources available through symbolic names. The following table lists possible links: +  +  **self (GET)**: The link to invoice representation itself. Following this link returns representation of very same invoice list representation.           
         /// </summary>
         /// <value>Map of links which makes URIs to other resources available through symbolic names. The following table lists possible links: +  +  **self (GET)**: The link to invoice representation itself. Following this link returns representation of very same invoice list representation.           </value>
+        [System.Xml.Serialization.XmlIgnore]
         [DataMember(Name="_links")]
         public Dictionary<string, LinkEntry> Links { get; set; }
 

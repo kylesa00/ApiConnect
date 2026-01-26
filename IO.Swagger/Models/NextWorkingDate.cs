@@ -38,6 +38,7 @@ namespace IO.Swagger.Models
         /// Map of links, which makes URIs to other resources available through symbolic names. The following table lists possible links: +  +  **branch (GET)**: Following this link results the branch for which the next working   date was calculated
         /// </summary>
         /// <value>Map of links, which makes URIs to other resources available through symbolic names. The following table lists possible links: +  +  **branch (GET)**: Following this link results the branch for which the next working   date was calculated</value>
+        [System.Xml.Serialization.XmlIgnore]
         [DataMember(Name="_links")]
         public Dictionary<string, LinkEntry> Links { get; set; }
 
