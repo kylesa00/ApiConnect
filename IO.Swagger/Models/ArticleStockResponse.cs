@@ -40,6 +40,7 @@ namespace IO.Swagger.Models
         /// </summary>
         /// <value>Map of links, which makes URIs to other resources available through symbolic names. The following table lists possible mappings: +  +  
         /// **self (GET)**: The link to the article stock response representation itself. Following this link returns the very same response representation.</value>
+        [System.Xml.Serialization.XmlIgnore]
         [Required]
         [DataMember(Name="_links")]
         public Dictionary<string, LinkEntry> Links { get; set; }

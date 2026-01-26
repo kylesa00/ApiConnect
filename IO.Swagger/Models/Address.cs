@@ -160,6 +160,7 @@ namespace IO.Swagger.Models
         /// Current date/time will be used when query parameter is missing.
         /// </summary>
         /// <value>Map of links, which makes URIs to other resources available through symbolic names. The following table lists possible links: +  +  **self (GET)**: The link to address representation itself. Following this link returns representation of very same address resource. +  +  **next-tour (GET)**: Following this link, the next planned delivery tour to this address will be returned. Start date/time can be provided as query parameter, so that only tours departing from warehouse/distribution center after or equal that given start date/time will be considered. Current date/time will be used when query parameter is missing.</value>
+        [System.Xml.Serialization.XmlIgnore]
         [Required]
         [DataMember(Name="_links")]
         public Dictionary<string, LinkEntry> Links { get; set; }
