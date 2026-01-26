@@ -61,6 +61,7 @@ namespace IO.Swagger.Models
         /// </summary>
         /// <value>Map of links, which makes URIs to other resources available through symbolic names. The following table lists possible links: +  +  
         /// **self (GET)**: The link to employee representation itself. Following this link returns representation of very same employee resource. </value>
+        [System.Xml.Serialization.XmlIgnore]
         [DataMember(Name="_links")]
         public Dictionary<string, LinkEntry> Links { get; set; }
 
