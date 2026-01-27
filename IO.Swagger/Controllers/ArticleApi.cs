@@ -515,9 +515,11 @@ namespace IO.Swagger.Controllers
                             LeadTime = dr["leadTime"].ToString(),
                             ArticleId = dr["articleId"].ToString(),
                             ExternalArticleId = dr["externalArticleId"].ToString(),
-                            EPriority = 9,
+                            EPriority = 0,
                             DirectDelivery = "No",
-                            Stopped = "No"
+                            Stopped = "No"// yes or no
+
+                            //defaultVendor Yes/no
                         };
                         articleVendors.Add(articleVendor);
                     }
