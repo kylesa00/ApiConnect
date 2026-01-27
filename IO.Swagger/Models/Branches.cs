@@ -18,6 +18,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using System.Xml.Serialization;
 
 namespace IO.Swagger.Models
 { 
@@ -41,6 +42,7 @@ namespace IO.Swagger.Models
         /// </summary>
         /// <value>Map of links, which makes URIs to other resources available through symbolic names. The following table lists possible links: +  +  
         /// **self (GET)**: The link to branches representation itself. Following this link returns representation of very same list of branches.</value>
+        [XmlIgnore]
         [Required]
         [DataMember(Name="_links")]
         public Dictionary<string, LinkEntry> Links { get; set; }

@@ -18,6 +18,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using System.Xml.Serialization;
 
 namespace IO.Swagger.Models
 { 
@@ -110,6 +111,7 @@ namespace IO.Swagger.Models
         /// **article (GET)**: Following this link leads to the article resource, this order position belongs to.
         /// </summary>
         /// <value>Map of links, which makes URIs to other resources available through symbolic names. The following table lists possible links: +  +  **self (GET)**: The link to this order position representation itself. Following this link returns representation of very same order position resource. +  +  **article (GET)**: Following this link leads to the article resource, this order position belongs to.</value>
+        [XmlIgnore]
         [Required]
         [DataMember(Name="_links")]
         public Dictionary<string, LinkEntry> Links { get; set; }

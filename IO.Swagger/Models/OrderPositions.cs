@@ -18,6 +18,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using System.Xml.Serialization;
 
 namespace IO.Swagger.Models
 { 
@@ -26,7 +27,7 @@ namespace IO.Swagger.Models
     /// </summary>
     [DataContract]
     public partial class OrderPositions : IEquatable<OrderPositions>
-    { 
+    {
         /// <summary>
         /// Map of links, which makes URIs to other resources available through symbolic names. The following table lists possible links: +  +  
         /// **self (GET)**: The link to order positions representation itself. Following this link returns representation of very same list of order positions.  +  
@@ -40,6 +41,7 @@ namespace IO.Swagger.Models
         /// 
         /// **next (GET)**: The &#x60;next&#x60; link is present, if older order positions than returned ones exist. This link repeats query parameters, 
         /// which are provided in original request. That way, clients do not need to construct URIs themselves to get the batch of next order positions. +  +  **prev (GET)**: The &#x60;prev&#x60; link is present, if more recent order postitions than returned ones exit. This link repeats query parameters, which are provided in original request. That way, clients don&#39;t need to construct URIs themselves to get the batch of previous order positions.           </value>
+        [XmlIgnore]
         [Required]
         [DataMember(Name="_links")]
         public Dictionary<string, LinkEntry> Links { get; set; }

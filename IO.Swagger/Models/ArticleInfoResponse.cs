@@ -18,6 +18,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using System.Xml.Serialization;
 
 namespace IO.Swagger.Models
 { 
@@ -38,9 +39,9 @@ namespace IO.Swagger.Models
         /// Map of links, which makes URIs to other resources available through symbolic names. The following table lists possible mappings: +  +  **self (GET)**: The link to the article response representation itself. Following this link returns the very same response representation.  +  **collection/stocks (GET)**: Following this link with a GET request, results in a list of articles stocks per branch. +  +  **collection/stocks/sum (GET)**: Following this link with a GET request, results in a list of articles sum of stocks for the requested country. +            
         /// </summary>
         /// <value>Map of links, which makes URIs to other resources available through symbolic names. The following table lists possible mappings: +  +  **self (GET)**: The link to the article response representation itself. Following this link returns the very same response representation.  +  **collection/stocks (GET)**: Following this link with a GET request, results in a list of articles stocks per branch. +  +  **collection/stocks/sum (GET)**: Following this link with a GET request, results in a list of articles sum of stocks for the requested country. +            </value>
-        [System.Xml.Serialization.XmlIgnore]
         [Required]
         [DataMember(Name="_links")]
+        [XmlIgnore]
         public Dictionary<string, LinkEntry> Links { get; set; }
 
         /// <summary>
