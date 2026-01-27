@@ -32,22 +32,7 @@ using static IO.Swagger.Models.Order;
 namespace IO.Swagger.Controllers
 {
 
-    public static class NavExtensions
-    {
-        public static void EnableHybridAuth(this System.ServiceModel.ClientBase<NavWebServiceReference.ConnectIntegration_Port> client)
-        {
-            var binding = (BasicHttpBinding)client.Endpoint.Binding;
-            var customBinding = new CustomBinding(binding);
-            var transport = customBinding.Elements.Find<HttpTransportBindingElement>();
 
-            if (transport != null)
-            {
-                transport.AuthenticationScheme = System.Net.AuthenticationSchemes.Negotiate | System.Net.AuthenticationSchemes.Ntlm;
-            }
-
-            client.Endpoint.Binding = customBinding;
-        }
-    }
 
     /// <summary>
         /// 
@@ -779,20 +764,30 @@ namespace IO.Swagger.Controllers
             try
             {              
                 var res = new NavWebServiceReference.ConnectIntegration_PortClient(NavWebServiceReference.ConnectIntegration_PortClient.EndpointConfiguration.ConnectIntegration_Port, navWebServiceReference.Url);
-                res.EnableHybridAuth();
-                res.ChannelFactory.Credentials.UserName.UserName = navWebServiceReference.Domain + @"\" + navWebServiceReference.UserName;
-                res.ChannelFactory.Credentials.UserName.Password = navWebServiceReference.Password;
-
-                res.ChannelFactory.Credentials.Windows.AllowedImpersonationLevel = System.Security.Principal.TokenImpersonationLevel.Impersonation;
+                
+                // Set credentials
                 res.ChannelFactory.Credentials.Windows.ClientCredential 
-                    = new System.Net.NetworkCredential { Domain = navWebServiceReference.Domain, UserName = navWebServiceReference.UserName, Password = navWebServiceReference.Password };
+                    = new System.Net.NetworkCredential(navWebServiceReference.UserName, navWebServiceReference.Password, navWebServiceReference.Domain);
 
                 res.ClientCredentials.Windows.AllowedImpersonationLevel = System.Security.Principal.TokenImpersonationLevel.Impersonation;
-                res.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential { Domain = navWebServiceReference.Domain, UserName = navWebServiceReference.UserName, Password = navWebServiceReference.Password };
-                             
-                ((BasicHttpBinding)res.Endpoint.Binding).Security.Mode = BasicHttpSecurityMode.TransportCredentialOnly;
-                ((BasicHttpBinding)res.Endpoint.Binding).Security.Transport.ClientCredentialType = HttpClientCredentialType.Ntlm;
-                ((BasicHttpBinding)res.Endpoint.Binding).Security.Transport.ProxyCredentialType = HttpProxyCredentialType.Windows;
+                res.ClientCredentials.Windows.ClientCredential 
+                    = new System.Net.NetworkCredential(navWebServiceReference.UserName, navWebServiceReference.Password, navWebServiceReference.Domain);
+
+                // Configure binding security based on environment settings
+                var binding = (BasicHttpBinding)res.Endpoint.Binding;
+                binding.Security.Mode = BasicHttpSecurityMode.TransportCredentialOnly;
+                
+                // Use configured client credential type (Negotiate for test, Ntlm for prod)
+                HttpClientCredentialType credentialType = navWebServiceReference.ClientCredentialType?.ToLower() switch
+                {
+                    "ntlm" => HttpClientCredentialType.Ntlm,
+                    "negotiate" => HttpClientCredentialType.Windows,
+                    "windows" => HttpClientCredentialType.Windows,
+                    _ => HttpClientCredentialType.Windows
+                };
+                
+                binding.Security.Transport.ClientCredentialType = credentialType;
+                binding.Security.Transport.ProxyCredentialType = HttpProxyCredentialType.None;
 
                 res.CreateConnectOrderInNAV(navRequest, ref navResponse, ref isOk, ref errorMessage);
             }

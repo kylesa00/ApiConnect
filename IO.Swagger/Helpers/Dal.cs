@@ -16,7 +16,9 @@ namespace IO.Swagger.Helpers
         public string Domain;
         public string UserName;
         public string Password;
+        public string ClientCredentialType;
     }
+    
     public class Dal
     {
         private readonly string _connectionString;
@@ -31,7 +33,8 @@ namespace IO.Swagger.Helpers
                 Url = opts.NavWebServiceReference,
                 Domain = opts.Domain,
                 UserName = opts.UserName,
-                Password = opts.Password
+                Password = opts.Password,
+                ClientCredentialType = opts.ClientCredentialType ?? "Windows"
             };
         }
 
