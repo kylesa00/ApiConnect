@@ -9,10 +9,20 @@ using Newtonsoft.Json.Serialization;
 using IO.Swagger.Filters;
 using IO.Swagger.Helpers;
 using Microsoft.OpenApi;
+using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Compact;
 
 var builder = WebApplication.CreateBuilder(args);
-// Add services to the container.
 
+// Use Serilog with the already built configuration
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+// Add services to the container.
 // Add framework services.
 builder.Services
     .AddControllers(options =>
@@ -109,3 +119,12 @@ app.UseRouting();
 app.MapControllers();
 
 app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application start-up failed");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

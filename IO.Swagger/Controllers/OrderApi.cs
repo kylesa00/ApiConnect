@@ -26,6 +26,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using Google.Protobuf.Collections;
+using Microsoft.Extensions.Logging;
 
 namespace IO.Swagger.Controllers
 {
@@ -36,10 +37,12 @@ namespace IO.Swagger.Controllers
     public class OrderApiController : ControllerBase
     {
         private readonly Dal _dal;
+        private readonly ILogger<OrderApiController> _logger;
 
-        public OrderApiController(Dal dal)
+        public OrderApiController(Dal dal, ILogger<OrderApiController> logger)
         {
             _dal = dal;
+            _logger = logger;
         }
 
         /// <summary>
@@ -544,8 +547,10 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorInfo), description: "If the provided company name is invalid, the service responds with a 400 (Bad Request) status and an ErrorInfo object. + If the request entity contained in message body violates any validation rule, the resulting status will also be 400 (Bad Request), but responds with a detailled description of violated rules instead of an ErrorInfo object.")]
         public virtual IActionResult CreateOrder([FromRoute][Required] string company, [FromBody] OrderRequest orderRequest)
         {
+            _logger.LogInformation("Received CreateOrder request for company: {Company}, payload: {Payload}", company, JsonConvert.SerializeObject(orderRequest));
             if (!Companies.IsCompanyExists(company))
             {
+                _logger.LogWarning("CreateOrder failed: Company not found: {Company}", company);
                 return StatusCode(400, (new ErrorInfo()
                 {
                     ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
@@ -772,6 +777,7 @@ namespace IO.Swagger.Controllers
             }
             catch (Exception e) 
             {
+                _logger.LogError(e, "Exception in CreateOrder for company: {Company}, payload: {Payload}", company, JsonConvert.SerializeObject(orderRequest));
                 return StatusCode(400, (new ErrorInfo()
                 {
                     ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
@@ -838,15 +844,18 @@ namespace IO.Swagger.Controllers
                 link = null;
                 ObjectResult objectResult = new ObjectResult(orderConfirmation);
                 objectResult.StatusCode = 202;
+                _logger.LogInformation("CreateOrder succeeded for company: {Company}, orderNr: {OrderNr}", company, orderConfirmation.OrderNr);
                 return objectResult;
             }
             else
+            {
+                _logger.LogWarning("CreateOrder failed with error: {ErrorMessage} for company: {Company}, payload: {Payload}", errorMessage, company, JsonConvert.SerializeObject(orderRequest));
                 return StatusCode(400, (new ErrorInfo()
                 {
                     ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
                     ErrorMessage = errorMessage
                 }));
-            
+            }
         }
 
         /// <summary>
