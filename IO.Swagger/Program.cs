@@ -119,12 +119,5 @@ app.UseRouting();
 app.MapControllers();
 
 app.Run();
-}
-catch (Exception ex)
-{
-    Log.Fatal(ex, "Application start-up failed");
-}
-finally
-{
-    Log.CloseAndFlush();
-}
+
+

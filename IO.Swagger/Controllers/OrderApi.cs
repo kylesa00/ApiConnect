@@ -770,7 +770,7 @@ namespace IO.Swagger.Controllers
                 res.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential { Domain = navWebServiceReference.Domain, UserName = navWebServiceReference.UserName, Password = navWebServiceReference.Password };
                              
                 ((BasicHttpBinding)res.Endpoint.Binding).Security.Mode = BasicHttpSecurityMode.TransportCredentialOnly;
-                ((BasicHttpBinding)res.Endpoint.Binding).Security.Transport.ClientCredentialType = HttpClientCredentialType.Windows;
+                ((BasicHttpBinding)res.Endpoint.Binding).Security.Transport.ClientCredentialType = HttpClientCredentialType.Ntlm;
                 ((BasicHttpBinding)res.Endpoint.Binding).Security.Transport.ProxyCredentialType = HttpProxyCredentialType.Windows;
 
                 res.CreateConnectOrderInNAV(navRequest, ref navResponse, ref isOk, ref errorMessage);

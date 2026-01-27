@@ -21,6 +21,12 @@
 		<GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
 	</PropertyGroup>
 	<ItemGroup>
+	  <Compile Remove="appLogs\**" />
+	  <Content Remove="appLogs\**" />
+	  <EmbeddedResource Remove="appLogs\**" />
+	  <None Remove="appLogs\**" />
+	</ItemGroup>
+	<ItemGroup>
 		<PackageReference Include="Grpc.AspNetCore" Version="2.76.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.2" />
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
