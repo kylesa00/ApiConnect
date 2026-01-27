@@ -49,6 +49,7 @@ namespace IO.Swagger.Helpers
         }
         #endregion WebReference
 
+
         private async Task SetConnectionOptionsAsync(SqlConnection connection)
         {
             using var cmd = new SqlCommand(@"
