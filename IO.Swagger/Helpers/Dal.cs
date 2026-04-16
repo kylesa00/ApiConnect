@@ -127,7 +127,7 @@ namespace IO.Swagger.Helpers
                             var dt = new DataTable();
                             dt.Load(reader); // Loads current result set
                             ds.Tables.Add(dt);
-                        } while (!reader.IsClosed);
+                        } while ( !reader.IsClosed);
                     }
                 }
             }

@@ -216,7 +216,9 @@ namespace IO.Swagger.Controllers
                         ErrorMessage = "Next working date not found"
                     }));
 
-                DateTime nextWorkingDate = Convert.ToDateTime(ds.Tables[0].Rows[0]["nextWorkingDate"]).ToUniversalTime();
+                //DateTime nextWorkingDate = Convert.ToDateTime(ds.Tables[0].Rows[0]["nextWorkingDate"]);
+                DateTime nextWorkingDate = DateTime.SpecifyKind(Convert.ToDateTime(ds.Tables[0].Rows[0]["nextWorkingDate"]), DateTimeKind.Utc);
+
 
                 links = new Dictionary<string, LinkEntry>() {
                         { "branch", new LinkEntry(Url.Action(nameof(GetBranchById), values: new { company, branchId = nextWorkingDateRequest.BranchId })) } };
