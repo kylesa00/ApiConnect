@@ -44,7 +44,7 @@ builder.Services
         {
             Version = "2.0-draftAv",
             Title = "Webshop Service API",
-            Description = "Webshop Service API (ASP.NET Core 3.1)",
+            Description = "Webshop Service API (ASP.NET 10)",
             Contact = new OpenApiContact()
             {
                 Name = "Swagger Codegen Contributors",
