@@ -134,6 +134,46 @@ namespace IO.Swagger.Helpers
             return ds;
         }
 
+        public async Task<DataSet> GetDataImprovedAsync(string spName, List<SqlParameter> spParam)
+        {
+            var ds = new DataSet();
+            await using (var con = new SqlConnection(GetCs()))
+            {
+                await con.OpenAsync();
+                await SetConnectionOptionsAsync(con);
+
+                await using (var cmd = new SqlCommand(spName, con))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    if (spParam != null)
+                    {
+                        foreach (var par in spParam)
+                        {
+                            if (par?.Value != null)
+                                cmd.Parameters.Add(par);
+                        }
+                    }
+
+                    await using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        // Load first result set
+                        var dt = new DataTable();
+                        dt.Load(reader);
+                        ds.Tables.Add(dt);
+
+                        // Only loop if you expect multiple result sets
+                        while (await reader.NextResultAsync())
+                        {
+                            dt = new DataTable();
+                            dt.Load(reader);
+                            ds.Tables.Add(dt);
+                        }
+                    }
+                }
+            }
+            return ds;
+        }
+
         public async Task<DataSet> GetDataAsync(string spName, SqlParameter spParam)
         {
             List<SqlParameter> parList = new List<SqlParameter>();
