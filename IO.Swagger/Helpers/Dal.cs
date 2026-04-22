@@ -205,17 +205,15 @@ namespace IO.Swagger.Helpers
                 await using (var cmd = new SqlCommand(sql, con))
                 {
                     cmd.CommandType = CommandType.Text;
-                    await using (var reader = await cmd.ExecuteReaderAsync())
+                    // Use CloseConnection so the reader owns the connection lifetime.
+                    // DataTable.Load() reads all rows and closes the reader when done;
+                    // calling NextResultAsync() after that throws because the reader is
+                    // already closed, so we simply load the single result set and return.
+                    await using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection))
                     {
                         var dt = new DataTable();
                         dt.Load(reader);
                         ds.Tables.Add(dt);
-                        while (await reader.NextResultAsync())
-                        {
-                            dt = new DataTable();
-                            dt.Load(reader);
-                            ds.Tables.Add(dt);
-                        }
                     }
                 }
             }
