@@ -16,8 +16,6 @@ namespace IO.Swagger.Helpers
     /// </summary>
     public static class CacheKeys
     {
-        public const string Companies = "cache_companies";
-        public const string CustApprovalTypes = "cache_cust_approval_types";
         public const string OrderRoutingCalendar = "cache_order_routing_calendar";
         public const string CustomerAddresses = "cache_customer_addresses";
     }
@@ -206,26 +204,26 @@ namespace IO.Swagger.Helpers
         /// Returns true when <paramref name="company"/> exists in the cached company list.
         /// Falls back to true (permissive) when the cache entry is missing.
         /// </summary>
-        public static bool IsCompanyValid(IMemoryCache cache, string company)
-        {
-            if (cache.TryGetValue(CacheKeys.Companies, out HashSet<string> companies))
-                return companies.Contains(company);
+        //public static bool IsCompanyValid(IMemoryCache cache, string company)
+        //{
+        //    if (cache.TryGetValue(CacheKeys.Companies, out HashSet<string> companies))
+        //        return companies.Contains(company);
 
-            // Cache not yet populated – allow the request through.
-            return true;
-        }
+        //    // Cache not yet populated – allow the request through.
+        //    return true;
+        //}
 
-        /// <summary>
-        /// Returns the cached approval types for a customer, or an empty list when not found.
-        /// </summary>
-        public static List<string> GetApprovalTypes(IMemoryCache cache, string customerNr)
-        {
-            if (cache.TryGetValue(CacheKeys.CustApprovalTypes, out Dictionary<string, List<string>> approvalTypes)
-                && approvalTypes.TryGetValue(customerNr, out var list))
-                return list;
+        ///// <summary>
+        ///// Returns the cached approval types for a customer, or an empty list when not found.
+        ///// </summary>
+        //public static List<string> GetApprovalTypes(IMemoryCache cache, string customerNr)
+        //{
+        //    if (cache.TryGetValue(CacheKeys.CustApprovalTypes, out Dictionary<string, List<string>> approvalTypes)
+        //        && approvalTypes.TryGetValue(customerNr, out var list))
+        //        return list;
 
-            return new List<string>();
-        }
+        //    return new List<string>();
+        //}
 
         /// <summary>
         /// Returns all cached <see cref="OrderRoutingCalendarEntry"/> rows.
