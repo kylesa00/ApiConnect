@@ -13,6 +13,7 @@ namespace IO.Swagger.Helpers
     public class NavWebServiceReference
     {
         public string Url;
+        public string UrlBranches;
         public string Domain;
         public string UserName;
         public string Password;
@@ -31,6 +32,7 @@ namespace IO.Swagger.Helpers
             _navWebServiceReference = new NavWebServiceReference
             {
                 Url = opts.NavWebServiceReference,
+                UrlBranches = opts.NavWebServiceReferenceBranches,
                 Domain = opts.Domain,
                 UserName = opts.UserName,
                 Password = opts.Password,
@@ -185,6 +187,39 @@ namespace IO.Swagger.Helpers
         public async Task<DataSet> GetDataAsync(string spName)
         {
             return await GetDataAsync(spName, new SqlParameter(null, null));
+        }
+        #endregion
+
+        #region GetDataRaw
+        /// <summary>
+        /// Executes a raw SQL query (CommandType.Text) and returns the results as a DataSet.
+        /// Use for direct table reads where no stored procedure exists.
+        /// </summary>
+        public async Task<DataSet> GetDataRawAsync(string sql)
+        {
+            var ds = new DataSet();
+            await using (var con = new SqlConnection(GetCs()))
+            {
+                await con.OpenAsync();
+                await SetConnectionOptionsAsync(con);
+                await using (var cmd = new SqlCommand(sql, con))
+                {
+                    cmd.CommandType = CommandType.Text;
+                    await using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        var dt = new DataTable();
+                        dt.Load(reader);
+                        ds.Tables.Add(dt);
+                        while (await reader.NextResultAsync())
+                        {
+                            dt = new DataTable();
+                            dt.Load(reader);
+                            ds.Tables.Add(dt);
+                        }
+                    }
+                }
+            }
+            return ds;
         }
         #endregion
 

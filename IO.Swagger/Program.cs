@@ -66,6 +66,12 @@ builder.Services
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
+// In-memory cache used by DatabaseCacheService and order validation
+builder.Services.AddMemoryCache();
+
+// Background service that loads reference data from the DB into the cache at startup
+builder.Services.AddHostedService<IO.Swagger.Helpers.DatabaseCacheService>();
+
 // Register Dal as a scoped service for DI
 builder.Services.AddScoped<Dal>();
 
