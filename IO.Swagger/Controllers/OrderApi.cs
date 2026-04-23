@@ -1,4 +1,4 @@
-/*
+ï»¿/*
  * Webshop Service API
  *
  * Webshop services connect Webshop applications to ERP system. The entry point of Webshop API is `/customers/{companyName}/{customerNr}`, which is called by Webshop application whenever a user logs in. If the customer requestedOrderPosition by its number could be found, the response contains a `_links` section, which contains all possible navigations and actions the customer can take.
@@ -889,10 +889,12 @@ namespace IO.Swagger.Controllers
         /// <para>
         /// Matching rules (all must hold for a calendar row to be considered a hit):
         /// <list type="bullet">
-        ///   <item>The row's <c>LocationCode</c> equals <paramref name="pickupBranchId"/>.</item>
+        ///   <item>The row's <c>ShipmentMethodCode</c> matches the mapped value of <c>SendMethod</c>
+        ///         (TOUR â†’ FCC, ABH â†’ LIÄŒNO).</item>
+        ///   <item>The row's <c>LocationCode</c> equals <paramref name="orderRequest"/>.PickupBranchId.</item>
         ///   <item>The row's <c>TransportRouteCode</c> equals the transport route code stored in
         ///         <see cref="CustomerAddressEntry"/> for this customer / delivery address.</item>
-        ///   <item>The current ISO day-of-week (1=Mon … 7=Sun) falls within
+        ///   <item>The current ISO day-of-week (1=Mon â€¦ 7=Sun) falls within
         ///         [<c>FromDay</c>, <c>ToDay</c>].</item>
         ///   <item>The current time-of-day falls within
         ///         [<c>FromTime.TimeOfDay</c>, <c>ToTime.TimeOfDay</c>].</item>
@@ -905,7 +907,23 @@ namespace IO.Swagger.Controllers
             Helpers.NavWebServiceReference navRef,
             OrderRequest orderRequest)
         {
-            // 1. Get the customer's transport route code from the address cache.
+            // Guard: only apply branch-routing logic when the PickupBranchId is actually
+            // present as a LocationCode in the cached calendar. If it is not, there are no
+            // routing rules for this branch so send straight to the primary Url.
+            var allCalendarRows = DatabaseCacheService.GetOrderRoutingCalendar(_cache);
+            bool branchInCalendar = !string.IsNullOrEmpty(orderRequest.BranchId)
+                && allCalendarRows.Exists(row =>
+                    string.Equals(row.LocationCode, orderRequest.BranchId, StringComparison.OrdinalIgnoreCase));
+
+            if (!branchInCalendar)
+            {
+                _logger.LogInformation(
+                    "ResolveWebServiceUrl: PickupBranchId={PickupBranchId} not found in calendar cache. " +
+                    "Routing to primary Url.",
+                    orderRequest.BranchId);
+                return navRef.Url;
+            }
+
             string transportRouteCode = null;
 
             if (!string.IsNullOrEmpty(orderRequest.DeliveryAddressId))
@@ -914,14 +932,12 @@ namespace IO.Swagger.Controllers
                 transportRouteCode = addressEntry?.TransportRouteCode;
             }
 
-            // Fall back to the default address if no specific one matched.
             if (string.IsNullOrEmpty(transportRouteCode))
             {
                 var defaultAddress = DatabaseCacheService.GetDefaultCustomerAddress(_cache, orderRequest.CustomerNr);
                 transportRouteCode = defaultAddress?.TransportRouteCode;
             }
 
-            // If we still have no transport route code we cannot match any calendar row.
             if (string.IsNullOrEmpty(transportRouteCode))
             {
                 _logger.LogWarning(
@@ -931,16 +947,31 @@ namespace IO.Swagger.Controllers
                 return navRef.UrlBranches;
             }
 
-            // 2. Convert .NET DayOfWeek (Sun=0 … Sat=6) to NAV/ISO convention (Mon=1 … Sun=7).
+            string shipmentMethodCode = orderRequest.SendMethod?.ToUpperInvariant() switch
+            {
+                "TOUR" => "FCC",
+                "ABH"  => "LIÄŒNO",
+                _      => null
+            };
+
+            if (shipmentMethodCode == null)
+            {
+                _logger.LogInformation(
+                    "ResolveWebServiceUrl: SendMethod={SendMethod} has no calendar mapping for " +
+                    "customerNr={CustomerNr}. Routing to UrlBranches.",
+                    orderRequest.SendMethod, orderRequest.CustomerNr);
+                return navRef.UrlBranches;
+            }
+
             DateTime now = DateTime.Now;
-            int dotNetDay = (int)now.DayOfWeek;               // 0=Sun, 1=Mon … 6=Sat
-            int navDay    = dotNetDay == 0 ? 7 : dotNetDay;   // 1=Mon … 7=Sun
+            int dotNetDay = (int)now.DayOfWeek;               // 0=Sun, 1=Mon â€¦ 6=Sat
+            int navDay    = dotNetDay == 0 ? 7 : dotNetDay;   // 1=Mon â€¦ 7=Sun
             TimeSpan currentTime = now.TimeOfDay;
 
-            // 3. Search the routing calendar.
             var calendarRows = DatabaseCacheService.GetOrderRoutingCalendar(_cache);
             bool matchFound = calendarRows.Exists(row =>
-                string.Equals(row.LocationCode,orderRequest.PickupBranchId, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(row.ShipmentMethodCode, shipmentMethodCode, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(row.LocationCode, orderRequest.PickupBranchId, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(row.TransportRouteCode, transportRouteCode, StringComparison.OrdinalIgnoreCase) &&
                 navDay >= row.FromDay && navDay <= row.ToDay &&
                 currentTime >= row.FromTime.TimeOfDay && currentTime <= row.ToTime.TimeOfDay);
@@ -949,17 +980,21 @@ namespace IO.Swagger.Controllers
             {
                 _logger.LogInformation(
                     "ResolveWebServiceUrl: calendar match found for customerNr={CustomerNr}, " +
+                    "sendMethod={SendMethod} (shipmentMethodCode={ShipmentMethodCode}), " +
                     "pickupBranchId={PickupBranchId}, transportRouteCode={TransportRouteCode}. " +
                     "Routing to primary Url.",
-                    orderRequest.CustomerNr, orderRequest.PickupBranchId, transportRouteCode);
+                    orderRequest.CustomerNr, orderRequest.SendMethod, shipmentMethodCode,
+                    orderRequest.PickupBranchId, transportRouteCode);
                 return navRef.Url;
             }
 
             _logger.LogInformation(
                 "ResolveWebServiceUrl: no calendar match for customerNr={CustomerNr}, " +
+                "sendMethod={SendMethod} (shipmentMethodCode={ShipmentMethodCode}), " +
                 "pickupBranchId={PickupBranchId}, transportRouteCode={TransportRouteCode}, " +
                 "navDay={NavDay}, currentTime={CurrentTime}. Routing to UrlBranches.",
-                orderRequest.CustomerNr, orderRequest.PickupBranchId, transportRouteCode, navDay, currentTime);
+                orderRequest.CustomerNr, orderRequest.SendMethod, shipmentMethodCode,
+                orderRequest.PickupBranchId, transportRouteCode, navDay, currentTime);
             return navRef.UrlBranches;
         }
 
