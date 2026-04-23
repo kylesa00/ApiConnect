@@ -501,39 +501,39 @@ namespace IO.Swagger.Controllers
         public virtual async Task<IActionResult> ChangeOrderProcessStatus([FromRoute][Required] string company, [FromBody] OrderProcessStatus orderProcessStatus)
         {
            if (!Companies.IsCompanyExists(company))
-            {
-                return StatusCode(400, (new ErrorInfo()
-                {
-                    ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
-                    ErrorMessage = "Company not found"
-                }));
-            }
+           {
+               return StatusCode(400, (new ErrorInfo()
+               {
+                   ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
+                   ErrorMessage = "Company not found"
+               }));
+           }
 
-            List<SqlParameter> param = new List<SqlParameter>()
-            {
-                new SqlParameter("@company", company),
-                new SqlParameter("@orderNr", orderProcessStatus.OrderNr),
-                new SqlParameter("@processStatus", (object)orderProcessStatus.ProcessStatus  ?? DBNull.Value)
-            };
-            try
-            {
-                if (!Convert.ToBoolean(await _dal.ExecSpAsync("ChangeOrderProcessStatus", param)))
-                {
-                    ObjectResult objectResult = new ObjectResult(new OrderProcessStatusConfirmation() { ProcessStatusChanged = true });
-                    objectResult.StatusCode = 202;
-                    return objectResult;
-                }
-                else
-                    return StatusCode(400, (new ErrorInfo()
-                    {
-                        ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
-                        ErrorMessage = "Not found"
-                    }));
-            }
-            finally
-            {
-                param = null;
-            }
+           List<SqlParameter> param = new List<SqlParameter>()
+           {
+               new SqlParameter("@company", company),
+               new SqlParameter("@orderNr", orderProcessStatus.OrderNr),
+               new SqlParameter("@processStatus", (object)orderProcessStatus.ProcessStatus  ?? DBNull.Value)
+           };
+           try
+           {
+               if (!Convert.ToBoolean(await _dal.ExecSpAsync("ChangeOrderProcessStatus", param)))
+               {
+                   ObjectResult objectResult = new ObjectResult(new OrderProcessStatusConfirmation() { ProcessStatusChanged = true });
+                   objectResult.StatusCode = 202;
+                   return objectResult;
+               }
+               else
+                   return StatusCode(400, (new ErrorInfo()
+                   {
+                       ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
+                       ErrorMessage = "Not found"
+                   }));
+           }
+           finally
+           {
+               param = null;
+           }
 
         }
 
