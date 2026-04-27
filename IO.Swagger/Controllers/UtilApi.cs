@@ -23,6 +23,8 @@ using IO.Swagger.Models;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.IO;
+using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace IO.Swagger.Controllers
 {
@@ -33,10 +35,12 @@ namespace IO.Swagger.Controllers
     public class UtilApiController : ControllerBase
     {
         private readonly Dal _dal;
+        private readonly ILogger<UtilApiController> _logger;
 
-        public UtilApiController(Dal dal)
+        public UtilApiController(Dal dal, ILogger<UtilApiController> logger)
         {
             _dal = dal;
+            _logger = logger;
         }
         /// <summary>
         /// 
@@ -72,6 +76,56 @@ namespace IO.Swagger.Controllers
             finally
             {
                 assemblyVersion = null; packageVersion = null; filesPath = null;
+            }
+        }
+
+        private static readonly TimeSpan FixAvailabilityCooldown = TimeSpan.FromMinutes(30);
+        private static DateTimeOffset? _fixAvailabilityLastRanAt;
+
+        /// <summary>
+        /// Executes the FixAvailabilitySlowdown stored procedure to reset the query plan
+        /// for the availability procedure when the SQL optimizer produces a bad plan.
+        /// Enforces a 30-minute cooldown between executions.
+        /// </summary>
+        /// <response code="200">Procedure executed successfully.</response>
+        /// <response code="429">Cooldown period has not elapsed yet.</response>
+        /// <response code="500">Execution failed — check application logs for details.</response>
+        [HttpGet]
+        [Route("/apps/prod-webshop-service-app/webshop-service/util/fix-availability-slowdown")]
+        [SwaggerOperation("FixAvailabilitySlowdown")]
+        [SwaggerResponse(statusCode: 200, description: "Procedure executed successfully.")]
+        [SwaggerResponse(statusCode: 429, description: "Cooldown period has not elapsed yet.")]
+        [SwaggerResponse(statusCode: 500, description: "Execution failed.")]
+        public async Task<IActionResult> FixAvailabilitySlowdown()
+        {
+            if (_fixAvailabilityLastRanAt.HasValue)
+            {
+                var elapsed = DateTimeOffset.UtcNow - _fixAvailabilityLastRanAt.Value;
+                if (elapsed < FixAvailabilityCooldown)
+                {
+                    var remaining = FixAvailabilityCooldown - elapsed;
+                    _logger.LogWarning("UtilApiController: FixAvailabilitySlowdown cooldown active, {Minutes}m {Seconds}s remaining.",
+                        (int)remaining.TotalMinutes, remaining.Seconds);
+                    return StatusCode(429, new
+                    {
+                        message = "Cooldown active. Please wait before running this again.",
+                        remainingSeconds = (int)remaining.TotalSeconds
+                    });
+                }
+            }
+
+            _logger.LogInformation("UtilApiController: executing FixAvailabilitySlowdown.");
+            try
+            {
+                await _dal.ExecSpAsync("FixAvailabilitySlowdown", new List<Microsoft.Data.SqlClient.SqlParameter>());
+                _fixAvailabilityLastRanAt = DateTimeOffset.UtcNow;
+                _logger.LogInformation("UtilApiController: FixAvailabilitySlowdown completed successfully.");
+                return Ok(new { message = "FixAvailabilitySlowdown executed successfully." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "UtilApiController: FixAvailabilitySlowdown failed.");
+                return StatusCode(500, new { message = "Execution failed. See application logs for details." });
             }
         }
     }
