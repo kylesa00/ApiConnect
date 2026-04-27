@@ -37,7 +37,7 @@ namespace IO.Swagger.Controllers
         /// <response code="200">Cache refreshed successfully.</response>
         /// <response code="500">Refresh failed — check application logs for details.</response>
         [HttpPost]
-        [Route("/cache/refresh")]
+        [Route("/apps/prod-webshop-service-app/webshop-service/cache/refresh")]
         [SwaggerOperation("RefreshCache")]
         [SwaggerResponse(statusCode: 200, description: "Cache refreshed successfully.")]
         [SwaggerResponse(statusCode: 500, description: "Refresh failed.")]
@@ -67,7 +67,7 @@ namespace IO.Swagger.Controllers
         /// </summary>
         /// <response code="200">Cache health information returned.</response>
         [HttpGet]
-        [Route("/cache/health")]
+        [Route("/apps/prod-webshop-service-app/webshop-service/cache/health")]
         [SwaggerOperation("GetCacheHealth")]
         [SwaggerResponse(statusCode: 200, description: "Cache health information returned.")]
         public IActionResult GetCacheHealth()
