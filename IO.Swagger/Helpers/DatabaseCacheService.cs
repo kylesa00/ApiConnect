@@ -21,18 +21,27 @@ namespace IO.Swagger.Helpers
     }
 
     /// <summary>
-    /// Background service that pre-loads reference data from the database into IMemoryCache
-    /// on application startup so that it is available for order validation without hitting
-    /// the database on every request.
+    /// Background service that loads reference data from the database into <see cref="IMemoryCache"/>
+    /// at startup and then refreshes it on a fixed interval so the cache never goes stale.
     /// </summary>
-    public class DatabaseCacheService : IHostedService
+    public class DatabaseCacheService : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IMemoryCache _cache;
         private readonly ILogger<DatabaseCacheService> _logger;
 
-        // How long cached entries remain valid before they need refreshing.
-        private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(6);
+        // How often the cache is reloaded. Entries are set with no expiration so they
+        // remain available between reloads and are simply overwritten on each tick.
+        private static readonly TimeSpan RefreshInterval = TimeSpan.FromHours(6);
+
+        // Metadata exposed to the health endpoint.
+        public DateTimeOffset? LastRefreshedAt { get; private set; }
+        public DateTimeOffset? NextRefreshAt { get; private set; }
+        public int OrderRoutingCalendarCount { get; private set; }
+        public int CustomerAddressesCount { get; private set; }
+
+        // Prevents a manual refresh from running concurrently with the periodic one.
+        private readonly SemaphoreSlim _refreshLock = new SemaphoreSlim(1, 1);
 
         public DatabaseCacheService(
             IServiceScopeFactory scopeFactory,
@@ -44,23 +53,64 @@ namespace IO.Swagger.Helpers
             _logger = logger;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        /// <summary>
+        /// Triggers an immediate cache refresh. Safe to call concurrently — if a refresh
+        /// is already in progress the caller waits for it to complete instead of starting
+        /// a second one.
+        /// </summary>
+        public async Task RefreshAsync(CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation("DatabaseCacheService: loading reference data from database...");
+            await _refreshLock.WaitAsync(cancellationToken);
+            try
+            {
+                await LoadAllAsync(cancellationToken);
+            }
+            finally
+            {
+                _refreshLock.Release();
+            }
+        }
 
-            // Dal is scoped, so we need our own scope here.
+        public override void Dispose()
+        {
+            _refreshLock.Dispose();
+            base.Dispose();
+        }
+
+        // StartAsync (via IHostedLifecycleService) blocks the host from marking the app
+        // as "ready" until the cache is fully populated. This guarantees no request
+        // is served with an empty cache on a cold start.
+        public override async Task StartAsync(CancellationToken cancellationToken)
+        {
+            await RefreshAsync(cancellationToken);
+            await base.StartAsync(cancellationToken);
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            // Initial load already done in StartAsync; just run the periodic refresh.
+            using var timer = new PeriodicTimer(RefreshInterval);
+            while (await timer.WaitForNextTickAsync(stoppingToken))
+            {
+                await RefreshAsync(stoppingToken);
+            }
+        }
+
+        private async Task LoadAllAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("DatabaseCacheService: refreshing reference data from database...");
+
+            // Dal is scoped, so create a fresh scope for each reload.
             using var scope = _scopeFactory.CreateScope();
             var dal = scope.ServiceProvider.GetRequiredService<Dal>();
 
-            //await LoadCompaniesAsync(dal, cancellationToken);
-            //await LoadCustApprovalTypesAsync(dal, cancellationToken);
             await LoadOrderRoutingCalendarAsync(dal, cancellationToken);
             await LoadCustomerAddressesAsync(dal, cancellationToken);
 
-            _logger.LogInformation("DatabaseCacheService: reference data loaded successfully.");
+            LastRefreshedAt = DateTimeOffset.UtcNow;
+            NextRefreshAt = LastRefreshedAt + RefreshInterval;
+            _logger.LogInformation("DatabaseCacheService: reference data refreshed successfully.");
         }
-
-        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
         // ------------------------------------------------------------------ //
 
@@ -145,7 +195,9 @@ namespace IO.Swagger.Helpers
                 }
 
                 _cache.Set(CacheKeys.OrderRoutingCalendar, entries,
-                    new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = CacheDuration });
+                    new MemoryCacheEntryOptions { Priority = CacheItemPriority.NeverRemove });
+
+                OrderRoutingCalendarCount = entries.Count;
 
                 _logger.LogInformation("DatabaseCacheService: cached {Count} OrderRoutingCalendar entries.", entries.Count);
             }
@@ -185,7 +237,9 @@ namespace IO.Swagger.Helpers
                 }
 
                 _cache.Set(CacheKeys.CustomerAddresses, addressMap,
-                    new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = CacheDuration });
+                    new MemoryCacheEntryOptions { Priority = CacheItemPriority.NeverRemove });
+
+                CustomerAddressesCount = addressMap.Count;
 
                 _logger.LogInformation("DatabaseCacheService: cached CustomerAddresses for {Count} customers.", addressMap.Count);
             }

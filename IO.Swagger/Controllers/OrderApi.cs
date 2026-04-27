@@ -964,12 +964,12 @@ namespace IO.Swagger.Controllers
             }
 
             DateTime now = DateTime.Now;
-            int dotNetDay = (int)now.DayOfWeek;               // 0=Sun, 1=Mon … 6=Sat
-            int navDay    = dotNetDay == 0 ? 7 : dotNetDay;   // 1=Mon … 7=Sun
+            int dotNetDay = (int)now.DayOfWeek;        // Sun=0, Mon=1 … Sat=6
+            int navDay    = (dotNetDay + 6) % 7;       // Mon=0, Tue=1 … Sun=6
             TimeSpan currentTime = now.TimeOfDay;
 
-            var calendarRows = DatabaseCacheService.GetOrderRoutingCalendar(_cache);
-            bool matchFound = calendarRows.Exists(row =>
+            //var calendarRows = DatabaseCacheService.GetOrderRoutingCalendar(_cache);
+            bool matchFound = allCalendarRows.Exists(row =>
                 string.Equals(row.ShipmentMethodCode, shipmentMethodCode, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(row.LocationCode, orderRequest.PickupBranchId, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(row.TransportRouteCode, transportRouteCode, StringComparison.OrdinalIgnoreCase) &&
