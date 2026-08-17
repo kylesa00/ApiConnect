@@ -762,16 +762,18 @@ namespace IO.Swagger.Controllers
 
            Helpers.NavWebServiceReference navWebServiceReference = _dal.GetNavWebReference();
 
-            string resolvedUrl = ResolveWebServiceUrl(
+            bool routeToCentral = ShouldRouteToCentral(
                 navWebServiceReference,
                 orderRequest);
 
             _logger.LogInformation(
-                "CreateOrder routing: customerNr={CustomerNr}, pickupBranchId={PickupBranchId}, resolvedUrl={Url}",
-                orderRequest.CustomerNr, orderRequest.PickupBranchId, resolvedUrl);
+                "CreateOrder routing: customerNr={CustomerNr}, pickupBranchId={PickupBranchId}, routeToCentral={RouteToCentral}",
+                orderRequest.CustomerNr, orderRequest.PickupBranchId, routeToCentral);
 
             try
             {              
+
+                var resolvedUrl = routeToCentral ? navWebServiceReference.Url : navWebServiceReference.UrlBranches;
 
                 var res = new NavWebServiceReference.ConnectIntegration_PortClient(NavWebServiceReference.ConnectIntegration_PortClient.EndpointConfiguration.ConnectIntegration_Port, resolvedUrl);
                 
@@ -816,65 +818,15 @@ namespace IO.Swagger.Controllers
             }       
             if (isOk)
             {
-                List<Availability> availabilities = new List<Availability>();
-                Dictionary<string, LinkEntry> link = new Dictionary<string, LinkEntry> { { "self", new LinkEntry(Request.Path.ToString()) } };
-                link = UrlTool.ParseLinks(link);
-
-                foreach (NavWebServiceReference.availabilities navAvailailitie in navResponse.OrderConfirmationConnectWebSalesHeader[0].availabilities)
-                {                   
-                    List<Tour> tours = new List<Tour>();
-                    foreach(NavWebServiceReference.tourTimeTable navTourTime in navAvailailitie.tourTimeTable)
-                    {
-                        DateTime dt = DateTime.Today;
-                        DateTime.TryParse(navTourTime.startTime, out dt);
-
-                        Tour tour = new Tour()
-                        {
-                            TourName = navTourTime.tourNameTimeTable,                       
-                            StartTime = dt.ToUniversalTime()           
-                        };
-                        tours.Add(tour);
-                    }
-
-                    Availability availability = new Availability()
-                    {
-                        ArticleId = navAvailailitie.articleId,
-                        Quantity = Convert.ToDouble(navAvailailitie.quantity),
-                        BackOrder = navAvailailitie.backOrder,
-                        CutOffTime = navAvailailitie.cutOffTime.ToUniversalTime(),
-                        DeliveryTime = navAvailailitie.deliveryTime.ToUniversalTime(),
-                        ImmediateDelivery = navAvailailitie.immediateDelivery,
-                        StockWarehouse = navAvailailitie.stockWarehouse,
-                        DeliveryWarehouse = navAvailailitie.deliveryWarehouse,
-                        SendMethod = navAvailailitie.sendMethod,
-                        AssignmentPriority = navAvailailitie.assignmentPriority,
-                        ErrorMessage = navAvailailitie.errorMessage,
-                        TourName = navAvailailitie.tourName,
-                        TourTimeTable = tours
-                    };
-                    availabilities.Add(availability);
-                    tours = null;
-                }
-
-                OrderConfirmation orderConfirmation = new OrderConfirmation()
-                {
-                    OrderNr = navResponse.OrderConfirmationConnectWebSalesHeader[0].orderNr,
-                    AxOrderURL = navResponse.OrderConfirmationConnectWebSalesHeader[0].axOrderURL,
-                    WorkIds = new List<string>() { navResponse.OrderConfirmationConnectWebSalesHeader[0].workIds },
-                    AllPositionsAvailable = Convert.ToBoolean(navResponse.OrderConfirmationConnectWebSalesHeader[0].allPositionsAvailable),
-                    CreditLimitExceeded = Convert.ToBoolean(navResponse.OrderConfirmationConnectWebSalesHeader[0].creditLimitExceeded),
-                    EffectiveAvailabilityLines = new Availabilities() { _Availabilities = availabilities },
-                    Links = link
-                };
-                availabilities = null;
-                link = null;
-                ObjectResult objectResult = new ObjectResult(orderConfirmation);
-                objectResult.StatusCode = 202;
-                _logger.LogInformation("CreateOrder succeeded for company: {Company}, orderNr: {OrderNr}", company, orderConfirmation.OrderNr);
-                return objectResult;
+                return RespondToConnect(company, navResponse);
             }
             else
             {
+                if (routeToCentral && !string.IsNullOrEmpty(errorMessage) && errorMessage.Contains("Error"))
+                {
+
+                }
+
                 _logger.LogWarning("CreateOrder failed with error: {ErrorMessage} for company: {Company}, payload: {Payload}", errorMessage, company, JsonConvert.SerializeObject(orderRequest));
                 return StatusCode(400, (new ErrorInfo()
                 {
@@ -882,6 +834,66 @@ namespace IO.Swagger.Controllers
                     ErrorMessage = errorMessage
                 }));
             }
+        }
+
+        private IActionResult RespondToConnect(string company, NavWebServiceReference.OrderConfirmation navResponse)
+        {
+            List<Availability> availabilities = new List<Availability>();
+            Dictionary<string, LinkEntry> link = new Dictionary<string, LinkEntry> { { "self", new LinkEntry(Request.Path.ToString()) } };
+            link = UrlTool.ParseLinks(link);
+
+            foreach (NavWebServiceReference.availabilities navAvailailitie in navResponse.OrderConfirmationConnectWebSalesHeader[0].availabilities)
+            {
+                List<Tour> tours = new List<Tour>();
+                foreach (NavWebServiceReference.tourTimeTable navTourTime in navAvailailitie.tourTimeTable)
+                {
+                    DateTime dt = DateTime.Today;
+                    DateTime.TryParse(navTourTime.startTime, out dt);
+
+                    Tour tour = new Tour()
+                    {
+                        TourName = navTourTime.tourNameTimeTable,
+                        StartTime = dt.ToUniversalTime()
+                    };
+                    tours.Add(tour);
+                }
+
+                Availability availability = new Availability()
+                {
+                    ArticleId = navAvailailitie.articleId,
+                    Quantity = Convert.ToDouble(navAvailailitie.quantity),
+                    BackOrder = navAvailailitie.backOrder,
+                    CutOffTime = navAvailailitie.cutOffTime.ToUniversalTime(),
+                    DeliveryTime = navAvailailitie.deliveryTime.ToUniversalTime(),
+                    ImmediateDelivery = navAvailailitie.immediateDelivery,
+                    StockWarehouse = navAvailailitie.stockWarehouse,
+                    DeliveryWarehouse = navAvailailitie.deliveryWarehouse,
+                    SendMethod = navAvailailitie.sendMethod,
+                    AssignmentPriority = navAvailailitie.assignmentPriority,
+                    ErrorMessage = navAvailailitie.errorMessage,
+                    TourName = navAvailailitie.tourName,
+                    TourTimeTable = tours
+                };
+                availabilities.Add(availability);
+                tours = null;
+            }
+
+            OrderConfirmation orderConfirmation = new OrderConfirmation()
+            {
+                OrderNr = navResponse.OrderConfirmationConnectWebSalesHeader[0].orderNr,
+                AxOrderURL = navResponse.OrderConfirmationConnectWebSalesHeader[0].axOrderURL,
+                WorkIds = new List<string>() { navResponse.OrderConfirmationConnectWebSalesHeader[0].workIds },
+                AllPositionsAvailable = Convert.ToBoolean(navResponse.OrderConfirmationConnectWebSalesHeader[0].allPositionsAvailable),
+                CreditLimitExceeded = Convert.ToBoolean(navResponse.OrderConfirmationConnectWebSalesHeader[0].creditLimitExceeded),
+                EffectiveAvailabilityLines = new Availabilities() { _Availabilities = availabilities },
+                Links = link
+            };
+            availabilities = null;
+            link = null;
+            ObjectResult objectResult = new ObjectResult(orderConfirmation);
+            objectResult.StatusCode = 202;
+            _logger.LogInformation("CreateOrder succeeded for company: {Company}, orderNr: {OrderNr}", company, orderConfirmation.OrderNr);
+            return objectResult;
         }
 
         /// <summary>
@@ -903,7 +915,7 @@ namespace IO.Swagger.Controllers
         /// Returns <see cref="Helpers.NavWebServiceReference.Url"/> when a matching row is found,
         /// otherwise <see cref="Helpers.NavWebServiceReference.UrlBranches"/>.
         /// </summary>
-        private string ResolveWebServiceUrl(
+        private bool ShouldRouteToCentral(
             Helpers.NavWebServiceReference navRef,
             OrderRequest orderRequest)
         {
@@ -921,7 +933,7 @@ namespace IO.Swagger.Controllers
                     "ResolveWebServiceUrl: PickupBranchId={PickupBranchId} not found in calendar cache. " +
                     "Routing to primary Url.",
                     orderRequest.BranchId);
-                return navRef.Url;
+                return true;
             }
 
             string transportRouteCode = null;
@@ -944,7 +956,7 @@ namespace IO.Swagger.Controllers
                     "ResolveWebServiceUrl: no TransportRouteCode found for customerNr={CustomerNr}, " +
                     "deliveryAddressId={DeliveryAddressId}. Routing to UrlBranches.",
                     orderRequest.CustomerNr, orderRequest.DeliveryAddressId);
-                return navRef.UrlBranches;
+                return false;
             }
 
             string shipmentMethodCode = orderRequest.SendMethod?.ToUpperInvariant() switch
@@ -960,7 +972,7 @@ namespace IO.Swagger.Controllers
                     "ResolveWebServiceUrl: SendMethod={SendMethod} has no calendar mapping for " +
                     "customerNr={CustomerNr}. Routing to UrlBranches.",
                     orderRequest.SendMethod, orderRequest.CustomerNr);
-                return navRef.UrlBranches;
+                return false;
             }
 
             DateTime now = DateTime.Now;
@@ -985,7 +997,7 @@ namespace IO.Swagger.Controllers
                     "Routing to primary Url.",
                     orderRequest.CustomerNr, orderRequest.SendMethod, shipmentMethodCode,
                     orderRequest.PickupBranchId, transportRouteCode);
-                return navRef.Url;
+                return true;
             }
 
             _logger.LogInformation(
@@ -995,7 +1007,7 @@ namespace IO.Swagger.Controllers
                 "navDay={NavDay}, currentTime={CurrentTime}. Routing to UrlBranches.",
                 orderRequest.CustomerNr, orderRequest.SendMethod, shipmentMethodCode,
                 orderRequest.PickupBranchId, transportRouteCode, navDay, currentTime);
-            return navRef.UrlBranches;
+            return false;
         }
 
         /// <summary>
