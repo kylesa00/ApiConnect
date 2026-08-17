@@ -834,8 +834,8 @@ namespace IO.Swagger.Controllers
 
                     try
                     {
-
-                        var resolvedUrl = routeToCentral ? navWebServiceReference.Url : navWebServiceReference.UrlBranches;
+                        routeToCentral = false;
+                        var resolvedUrl = navWebServiceReference.UrlBranches;
 
                         var res = new NavWebServiceReference.ConnectIntegration_PortClient(NavWebServiceReference.ConnectIntegration_PortClient.EndpointConfiguration.ConnectIntegration_Port, resolvedUrl);
 
