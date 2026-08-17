@@ -34,9 +34,9 @@ namespace IO.Swagger.Controllers
 
 
     /// <summary>
-        /// 
-        /// </summary>
-        [ApiController]
+    /// 
+    /// </summary>
+    [ApiController]
     public class OrderApiController : ControllerBase
     {
         private readonly Dal _dal;
@@ -73,7 +73,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(ErrorInfo), description: "If the customer has no orders or customer does not exist, endpoint responds with a 404 (Not Found) status.")]
         public virtual async Task<IActionResult> GetOrdersOfCustomer([FromRoute][Required] string company, [FromRoute][Required] string customerNr, [FromQuery] string orderNr, [FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo, [FromQuery] int? page)
         {
-           if (!Companies.IsCompanyExists(company))
+            if (!Companies.IsCompanyExists(company))
             {
                 return StatusCode(400, (new ErrorInfo()
                 {
@@ -82,7 +82,7 @@ namespace IO.Swagger.Controllers
                 }));
             }
 
-            List<Order> orders = new List<Order>();            
+            List<Order> orders = new List<Order>();
             List<SqlParameter> param = new List<SqlParameter>()
             {
                 new SqlParameter("@company", company),
@@ -258,7 +258,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(ErrorInfo), description: "If the order position referenced by number of order and sequence number does not exist, the service endpoint responds with a 404 (Not Found) status.")]
         public virtual async Task<IActionResult> GetOrderPosition([FromRoute][Required] string company, [FromRoute][Required] string customerNr, [FromRoute][Required] string orderNr, [FromRoute][Required] long? sequence)
         {
-           if (!Companies.IsCompanyExists(company))
+            if (!Companies.IsCompanyExists(company))
             {
                 return StatusCode(400, (new ErrorInfo()
                 {
@@ -473,7 +473,7 @@ namespace IO.Swagger.Controllers
         [ApiExplorerSettings(IgnoreApi = true)]
         public virtual IActionResult UpdateOrder([FromRoute][Required] string company, [FromBody] UpdateOrderRequest updateOrderRequest)
         {
-           
+
             string exampleJson = null;
             exampleJson = "{\n  \"orderUpdated\" : true\n}";
 
@@ -500,40 +500,40 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorInfo), description: "If the provided company name is invalid, the service responds with a 400 (Bad Request) status and an ErrorInfo object. + If the request entity contained in message body violates any validation rule, the resulting status will also be 400 (Bad Request), but responds with a detailled description of violated rules instead of an ErrorInfo object.")]
         public virtual async Task<IActionResult> ChangeOrderProcessStatus([FromRoute][Required] string company, [FromBody] OrderProcessStatus orderProcessStatus)
         {
-           if (!Companies.IsCompanyExists(company))
-           {
-               return StatusCode(400, (new ErrorInfo()
-               {
-                   ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
-                   ErrorMessage = "Company not found"
-               }));
-           }
+            if (!Companies.IsCompanyExists(company))
+            {
+                return StatusCode(400, (new ErrorInfo()
+                {
+                    ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
+                    ErrorMessage = "Company not found"
+                }));
+            }
 
-           List<SqlParameter> param = new List<SqlParameter>()
+            List<SqlParameter> param = new List<SqlParameter>()
            {
                new SqlParameter("@company", company),
                new SqlParameter("@orderNr", orderProcessStatus.OrderNr),
                new SqlParameter("@processStatus", (object)orderProcessStatus.ProcessStatus  ?? DBNull.Value)
            };
-           try
-           {
-               if (!Convert.ToBoolean(await _dal.ExecSpAsync("ChangeOrderProcessStatus", param)))
-               {
-                   ObjectResult objectResult = new ObjectResult(new OrderProcessStatusConfirmation() { ProcessStatusChanged = true });
-                   objectResult.StatusCode = 202;
-                   return objectResult;
-               }
-               else
-                   return StatusCode(400, (new ErrorInfo()
-                   {
-                       ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
-                       ErrorMessage = "Not found"
-                   }));
-           }
-           finally
-           {
-               param = null;
-           }
+            try
+            {
+                if (!Convert.ToBoolean(await _dal.ExecSpAsync("ChangeOrderProcessStatus", param)))
+                {
+                    ObjectResult objectResult = new ObjectResult(new OrderProcessStatusConfirmation() { ProcessStatusChanged = true });
+                    objectResult.StatusCode = 202;
+                    return objectResult;
+                }
+                else
+                    return StatusCode(400, (new ErrorInfo()
+                    {
+                        ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
+                        ErrorMessage = "Not found"
+                    }));
+            }
+            finally
+            {
+                param = null;
+            }
 
         }
 
@@ -748,47 +748,45 @@ namespace IO.Swagger.Controllers
 
                 items = navItems.ToArray()
             };
-           
+
             string[] text = new string[1];
             text[0] = string.Empty;
 
             NavWebServiceReference.OrderRequestConnectWebSalesHeader[] connectWebSalesHeaders = new NavWebServiceReference.OrderRequestConnectWebSalesHeader[1];
             connectWebSalesHeaders[0] = navHeader;
 
-            NavWebServiceReference.OrderRequest navRequest = new NavWebServiceReference.OrderRequest() {  OrderRequestConnectWebSalesHeader = connectWebSalesHeaders, Text = text };
+            NavWebServiceReference.OrderRequest navRequest = new NavWebServiceReference.OrderRequest() { OrderRequestConnectWebSalesHeader = connectWebSalesHeaders, Text = text };
             NavWebServiceReference.OrderConfirmation navResponse = new NavWebServiceReference.OrderConfirmation();
             bool isOk = false;
             string errorMessage = string.Empty;
 
-           Helpers.NavWebServiceReference navWebServiceReference = _dal.GetNavWebReference();
+            Helpers.NavWebServiceReference navWebServiceReference = _dal.GetNavWebReference();
 
-            bool routeToCentral = ShouldRouteToCentral(
-                navWebServiceReference,
-                orderRequest);
+            bool routeToCentral = ShouldRouteToCentral(orderRequest);
 
             _logger.LogInformation(
                 "CreateOrder routing: customerNr={CustomerNr}, pickupBranchId={PickupBranchId}, routeToCentral={RouteToCentral}",
                 orderRequest.CustomerNr, orderRequest.PickupBranchId, routeToCentral);
 
             try
-            {              
+            {
 
                 var resolvedUrl = routeToCentral ? navWebServiceReference.Url : navWebServiceReference.UrlBranches;
 
                 var res = new NavWebServiceReference.ConnectIntegration_PortClient(NavWebServiceReference.ConnectIntegration_PortClient.EndpointConfiguration.ConnectIntegration_Port, resolvedUrl);
-                
+
                 // Set credentials
-                res.ChannelFactory.Credentials.Windows.ClientCredential 
+                res.ChannelFactory.Credentials.Windows.ClientCredential
                     = new System.Net.NetworkCredential(navWebServiceReference.UserName, navWebServiceReference.Password, navWebServiceReference.Domain);
 
                 res.ClientCredentials.Windows.AllowedImpersonationLevel = System.Security.Principal.TokenImpersonationLevel.Impersonation;
-                res.ClientCredentials.Windows.ClientCredential 
+                res.ClientCredentials.Windows.ClientCredential
                     = new System.Net.NetworkCredential(navWebServiceReference.UserName, navWebServiceReference.Password, navWebServiceReference.Domain);
 
                 // Configure binding security based on environment settings
                 var binding = (BasicHttpBinding)res.Endpoint.Binding;
                 binding.Security.Mode = BasicHttpSecurityMode.TransportCredentialOnly;
-                
+
                 // Use configured client credential type (Negotiate for test, Ntlm for prod)
                 HttpClientCredentialType credentialType = navWebServiceReference.ClientCredentialType?.ToLower() switch
                 {
@@ -797,15 +795,15 @@ namespace IO.Swagger.Controllers
                     "windows" => HttpClientCredentialType.Windows,
                     _ => HttpClientCredentialType.Windows
                 };
-                
+
                 binding.Security.Transport.ClientCredentialType = credentialType;
                 binding.Security.Transport.ProxyCredentialType = HttpProxyCredentialType.None;
 
                 res.CreateConnectOrderInNAV(navRequest, ref navResponse, ref isOk, ref errorMessage);
             }
-            catch (Exception e) 
+            catch (Exception e)
             {
-                _logger.LogError(e, "Exception in CreateOrder for company: {Company}, payload: {Payload}", company, JsonConvert.SerializeObject(orderRequest));
+                _logger.LogError(e, "Exception in CreateOrder for payload: {Payload}", JsonConvert.SerializeObject(orderRequest));
                 return StatusCode(400, (new ErrorInfo()
                 {
                     ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
@@ -815,28 +813,90 @@ namespace IO.Swagger.Controllers
             finally
             {
                 navItems = null;
-            }       
+            }
+
+
+
+
             if (isOk)
             {
-                return RespondToConnect(company, navResponse);
+                return RespondToConnect(navResponse);
             }
             else
             {
-                if (routeToCentral && !string.IsNullOrEmpty(errorMessage) && errorMessage.Contains("Error"))
+                if (routeToCentral && !string.IsNullOrEmpty(errorMessage) && errorMessage.StartsWith("99"))
                 {
+                    // posalji ponovo na branch url
+
+                    _logger.LogInformation(
+                        "CreateOrder retrying on branch URL due to error code 99: customerNr={CustomerNr}, pickupBranchId={PickupBranchId}",
+                        orderRequest.CustomerNr, orderRequest.PickupBranchId);
+
+                    try
+                    {
+
+                        var resolvedUrl = routeToCentral ? navWebServiceReference.Url : navWebServiceReference.UrlBranches;
+
+                        var res = new NavWebServiceReference.ConnectIntegration_PortClient(NavWebServiceReference.ConnectIntegration_PortClient.EndpointConfiguration.ConnectIntegration_Port, resolvedUrl);
+
+                        // Set credentials
+                        res.ChannelFactory.Credentials.Windows.ClientCredential
+                            = new System.Net.NetworkCredential(navWebServiceReference.UserName, navWebServiceReference.Password, navWebServiceReference.Domain);
+
+                        res.ClientCredentials.Windows.AllowedImpersonationLevel = System.Security.Principal.TokenImpersonationLevel.Impersonation;
+                        res.ClientCredentials.Windows.ClientCredential
+                            = new System.Net.NetworkCredential(navWebServiceReference.UserName, navWebServiceReference.Password, navWebServiceReference.Domain);
+
+                        // Configure binding security based on environment settings
+                        var binding = (BasicHttpBinding)res.Endpoint.Binding;
+                        binding.Security.Mode = BasicHttpSecurityMode.TransportCredentialOnly;
+
+                        // Use configured client credential type (Negotiate for test, Ntlm for prod)
+                        HttpClientCredentialType credentialType = navWebServiceReference.ClientCredentialType?.ToLower() switch
+                        {
+                            "ntlm" => HttpClientCredentialType.Ntlm,
+                            "negotiate" => HttpClientCredentialType.Windows,
+                            "windows" => HttpClientCredentialType.Windows,
+                            _ => HttpClientCredentialType.Windows
+                        };
+
+                        binding.Security.Transport.ClientCredentialType = credentialType;
+                        binding.Security.Transport.ProxyCredentialType = HttpProxyCredentialType.None;
+
+                        res.CreateConnectOrderInNAV(navRequest, ref navResponse, ref isOk, ref errorMessage);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(e, "Exception in CreateOrder for payload: {Payload}", JsonConvert.SerializeObject(orderRequest));
+                        return StatusCode(400, (new ErrorInfo()
+                        {
+                            ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
+                            ErrorMessage = e.Message
+                        }));
+                    }
+                    finally
+                    {
+                        navItems = null;
+                    }
+
+                    if (isOk)
+                    {
+                        return RespondToConnect(navResponse);
+                    }
 
                 }
 
-                _logger.LogWarning("CreateOrder failed with error: {ErrorMessage} for company: {Company}, payload: {Payload}", errorMessage, company, JsonConvert.SerializeObject(orderRequest));
+                _logger.LogWarning("CreateOrder failed with error: {ErrorMessage} for payload: {Payload}", errorMessage, JsonConvert.SerializeObject(orderRequest));
                 return StatusCode(400, (new ErrorInfo()
                 {
                     ErrorOrigin = ErrorInfo.ErrorOriginEnum.WEBSHOPSERVICEEnum,
                     ErrorMessage = errorMessage
                 }));
+
             }
         }
 
-        private IActionResult RespondToConnect(string company, NavWebServiceReference.OrderConfirmation navResponse)
+        private IActionResult RespondToConnect(NavWebServiceReference.OrderConfirmation navResponse)
         {
             List<Availability> availabilities = new List<Availability>();
             Dictionary<string, LinkEntry> link = new Dictionary<string, LinkEntry> { { "self", new LinkEntry(Request.Path.ToString()) } };
@@ -892,32 +952,30 @@ namespace IO.Swagger.Controllers
             link = null;
             ObjectResult objectResult = new ObjectResult(orderConfirmation);
             objectResult.StatusCode = 202;
-            _logger.LogInformation("CreateOrder succeeded for company: {Company}, orderNr: {OrderNr}", company, orderConfirmation.OrderNr);
+            _logger.LogInformation("CreateOrder succeeded for orderNr: {OrderNr}", orderConfirmation.OrderNr);
             return objectResult;
         }
 
         /// <summary>
-        /// Determines which NAV web-service URL should receive this order.
+        /// Determines whether an order should be sent to the central NAV web service.
         /// <para>
         /// Matching rules (all must hold for a calendar row to be considered a hit):
         /// <list type="bullet">
         ///   <item>The row's <c>ShipmentMethodCode</c> matches the mapped value of <c>SendMethod</c>
         ///         (TOUR → FCC, ABH → LIČNO).</item>
         ///   <item>The row's <c>LocationCode</c> equals <paramref name="orderRequest"/>.PickupBranchId.</item>
-        ///   <item>The row's <c>TransportRouteCode</c> equals the transport route code stored in
-        ///         <see cref="CustomerAddressEntry"/> for this customer / delivery address.</item>
+        ///   <item>For send methods other than ABH, the row's <c>TransportRouteCode</c> equals
+        ///         the transport route code stored in <see cref="CustomerAddressEntry"/> for this
+        ///         customer / delivery address. ABH does not use the transport route code.</item>
         ///   <item>The current ISO day-of-week (1=Mon … 7=Sun) falls within
         ///         [<c>FromDay</c>, <c>ToDay</c>].</item>
         ///   <item>The current time-of-day falls within
         ///         [<c>FromTime.TimeOfDay</c>, <c>ToTime.TimeOfDay</c>].</item>
         /// </list>
         /// </para>
-        /// Returns <see cref="Helpers.NavWebServiceReference.Url"/> when a matching row is found,
-        /// otherwise <see cref="Helpers.NavWebServiceReference.UrlBranches"/>.
+        /// Returns <c>true</c> when a matching row is found; otherwise <c>false</c>.
         /// </summary>
-        private bool ShouldRouteToCentral(
-            Helpers.NavWebServiceReference navRef,
-            OrderRequest orderRequest)
+        private bool ShouldRouteToCentral(OrderRequest orderRequest)
         {
             // Guard: only apply branch-routing logic when the PickupBranchId is actually
             // present as a LocationCode in the cached calendar. If it is not, there are no
@@ -930,68 +988,63 @@ namespace IO.Swagger.Controllers
             if (!branchInCalendar)
             {
                 _logger.LogInformation(
-                    "ResolveWebServiceUrl: PickupBranchId={PickupBranchId} not found in calendar cache. " +
+                    "ShouldRouteToCentral: PickupBranchId={PickupBranchId} not found in calendar cache. " +
                     "Routing to primary Url.",
                     orderRequest.BranchId);
                 return true;
             }
 
-            string transportRouteCode = null;
-
-            if (!string.IsNullOrEmpty(orderRequest.DeliveryAddressId))
-            {
-                var addressEntry = DatabaseCacheService.GetCustomerAddressByCode(_cache, orderRequest.CustomerNr, orderRequest.DeliveryAddressId);
-                transportRouteCode = addressEntry?.TransportRouteCode;
-            }
-
-            if (string.IsNullOrEmpty(transportRouteCode))
-            {
-                var defaultAddress = DatabaseCacheService.GetDefaultCustomerAddress(_cache, orderRequest.CustomerNr);
-                transportRouteCode = defaultAddress?.TransportRouteCode;
-            }
-
-            if (string.IsNullOrEmpty(transportRouteCode))
-            {
-                _logger.LogWarning(
-                    "ResolveWebServiceUrl: no TransportRouteCode found for customerNr={CustomerNr}, " +
-                    "deliveryAddressId={DeliveryAddressId}. Routing to UrlBranches.",
-                    orderRequest.CustomerNr, orderRequest.DeliveryAddressId);
-                return false;
-            }
-
             string shipmentMethodCode = orderRequest.SendMethod?.ToUpperInvariant() switch
             {
                 "TOUR" => "FCC",
-                "ABH"  => "LIČNO",
-                _      => null
+                "ABH" => "LIČNO",
+                _ => null
             };
 
             if (shipmentMethodCode == null)
             {
                 _logger.LogInformation(
-                    "ResolveWebServiceUrl: SendMethod={SendMethod} has no calendar mapping for " +
+                    "ShouldRouteToCentral: SendMethod={SendMethod} has no calendar mapping for " +
                     "customerNr={CustomerNr}. Routing to UrlBranches.",
                     orderRequest.SendMethod, orderRequest.CustomerNr);
                 return false;
             }
 
+            bool requiresTransportRouteMatch = !string.Equals(
+                orderRequest.SendMethod,
+                "ABH",
+                StringComparison.OrdinalIgnoreCase);
+
+            string transportRouteCode = requiresTransportRouteMatch
+                ? GetTransportRouteCode(orderRequest)
+                : null;
+
+            if (requiresTransportRouteMatch && string.IsNullOrEmpty(transportRouteCode))
+            {
+                _logger.LogWarning(
+                    "ShouldRouteToCentral: no TransportRouteCode found for customerNr={CustomerNr}, " +
+                    "deliveryAddressId={DeliveryAddressId}. Routing to UrlBranches.",
+                    orderRequest.CustomerNr, orderRequest.DeliveryAddressId);
+                return false;
+            }
+
             DateTime now = DateTime.Now;
             int dotNetDay = (int)now.DayOfWeek;        // Sun=0, Mon=1 … Sat=6
-            int navDay    = (dotNetDay + 6) % 7;       // Mon=0, Tue=1 … Sun=6
+            int navDay = (dotNetDay + 6) % 7;       // Mon=0, Tue=1 … Sun=6
             TimeSpan currentTime = now.TimeOfDay;
 
-            //var calendarRows = DatabaseCacheService.GetOrderRoutingCalendar(_cache);
-            bool matchFound = allCalendarRows.Exists(row =>
+            bool routeToCentral = allCalendarRows.Exists(row =>
                 string.Equals(row.ShipmentMethodCode, shipmentMethodCode, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(row.LocationCode, orderRequest.PickupBranchId, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(row.TransportRouteCode, transportRouteCode, StringComparison.OrdinalIgnoreCase) &&
+                (!requiresTransportRouteMatch ||
+                    string.Equals(row.TransportRouteCode, transportRouteCode, StringComparison.OrdinalIgnoreCase)) &&
                 navDay >= row.FromDay && navDay <= row.ToDay &&
                 currentTime >= row.FromTime.TimeOfDay && currentTime <= row.ToTime.TimeOfDay);
 
-            if (matchFound)
+            if (routeToCentral)
             {
                 _logger.LogInformation(
-                    "ResolveWebServiceUrl: calendar match found for customerNr={CustomerNr}, " +
+                    "ShouldRouteToCentral: calendar match found for customerNr={CustomerNr}, " +
                     "sendMethod={SendMethod} (shipmentMethodCode={ShipmentMethodCode}), " +
                     "pickupBranchId={PickupBranchId}, transportRouteCode={TransportRouteCode}. " +
                     "Routing to primary Url.",
@@ -1001,13 +1054,30 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation(
-                "ResolveWebServiceUrl: no calendar match for customerNr={CustomerNr}, " +
+                "ShouldRouteToCentral: no calendar match for customerNr={CustomerNr}, " +
                 "sendMethod={SendMethod} (shipmentMethodCode={ShipmentMethodCode}), " +
                 "pickupBranchId={PickupBranchId}, transportRouteCode={TransportRouteCode}, " +
                 "navDay={NavDay}, currentTime={CurrentTime}. Routing to UrlBranches.",
                 orderRequest.CustomerNr, orderRequest.SendMethod, shipmentMethodCode,
                 orderRequest.PickupBranchId, transportRouteCode, navDay, currentTime);
             return false;
+        }
+
+        private string GetTransportRouteCode(OrderRequest orderRequest)
+        {
+            if (!string.IsNullOrEmpty(orderRequest.DeliveryAddressId))
+            {
+                var addressEntry = DatabaseCacheService.GetCustomerAddressByCode(
+                    _cache,
+                    orderRequest.CustomerNr,
+                    orderRequest.DeliveryAddressId);
+
+                if (!string.IsNullOrEmpty(addressEntry?.TransportRouteCode))
+                    return addressEntry.TransportRouteCode;
+            }
+
+            return DatabaseCacheService.GetDefaultCustomerAddress(_cache, orderRequest.CustomerNr)
+                ?.TransportRouteCode;
         }
 
         /// <summary>
@@ -1026,7 +1096,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorInfo), description: "If the provided company name is invalid, the service responds with a 400 (Bad Request) status and an ErrorInfo object. + If the request entity contained in message body violates any validation rule, the resulting status will also be 400 (Bad Request), but responds with a detailled description of violated rules instead of an ErrorInfo object.")]
         public virtual async Task<IActionResult> CreateShoppingBasket([FromRoute][Required] string company, [FromBody] OrderRequest orderRequest)
         {
-           if (!Companies.IsCompanyExists(company))
+            if (!Companies.IsCompanyExists(company))
             {
                 return StatusCode(400, (new ErrorInfo()
                 {
