@@ -74,10 +74,11 @@ namespace IO.Swagger.Controllers
         {
             bool calendarLoaded = _cache.TryGetValue(CacheKeys.OrderRoutingCalendar, out _);
             bool addressesLoaded = _cache.TryGetValue(CacheKeys.CustomerAddresses, out _);
+            bool itemMoqPairLoaded = _cache.TryGetValue(CacheKeys.ItemMoqPair, out _);
 
             var status = new
             {
-                status = calendarLoaded && addressesLoaded ? "healthy" : "degraded",
+                status = calendarLoaded && addressesLoaded && itemMoqPairLoaded ? "healthy" : "degraded",
                 lastRefreshedAt = _cacheService.LastRefreshedAt,
                 nextScheduledRefresh = _cacheService.NextRefreshAt,
                 entries = new
@@ -91,6 +92,11 @@ namespace IO.Swagger.Controllers
                     {
                         loaded = addressesLoaded,
                         count = _cacheService.CustomerAddressesCount
+                    },
+                    itemMoqPairCache = new
+                    {
+                        loaded = itemMoqPairLoaded,
+                        count = _cacheService.ItemMoqPairCount
                     }
                 }
             };

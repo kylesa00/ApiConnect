@@ -18,6 +18,7 @@ namespace IO.Swagger.Helpers
     {
         public const string OrderRoutingCalendar = "cache_order_routing_calendar";
         public const string CustomerAddresses = "cache_customer_addresses";
+        public const string ItemMoqPair = "cache_item_moq_pair";
     }
 
     /// <summary>
@@ -39,6 +40,7 @@ namespace IO.Swagger.Helpers
         public DateTimeOffset? NextRefreshAt { get; private set; }
         public int OrderRoutingCalendarCount { get; private set; }
         public int CustomerAddressesCount { get; private set; }
+        public int ItemMoqPairCount { get; private set; }
 
         // Prevents a manual refresh from running concurrently with the periodic one.
         private readonly SemaphoreSlim _refreshLock = new SemaphoreSlim(1, 1);
@@ -106,6 +108,7 @@ namespace IO.Swagger.Helpers
 
             await LoadOrderRoutingCalendarAsync(dal, cancellationToken);
             await LoadCustomerAddressesAsync(dal, cancellationToken);
+            await LoadItemMoqPairAsync(dal, cancellationToken);
 
             LastRefreshedAt = DateTimeOffset.UtcNow;
             NextRefreshAt = LastRefreshedAt + RefreshInterval;
@@ -247,6 +250,91 @@ namespace IO.Swagger.Helpers
             {
                 _logger.LogError(ex, "DatabaseCacheService: failed to load CustomerAddresses from database.");
             }
+        }
+
+        private async Task LoadItemMoqPairAsync(Dal dal, CancellationToken cancellationToken)
+        {
+            try
+            {
+                DataSet ds = await dal.GetDataRawAsync(
+                    "SELECT [ItemNo], [Pair], [CentralMoq] FROM [dbo].[ItemMoqPairCache]");
+
+                var entries = new Dictionary<string, ItemMoqPairCacheEntry>(StringComparer.OrdinalIgnoreCase);
+                foreach (DataRow row in ds.Tables[0].Rows)
+                {
+                    var entry = new ItemMoqPairCacheEntry
+                    {
+                        ItemNo = row["ItemNo"].ToString().Trim(),
+                        Pair = Convert.ToByte(row["Pair"]),
+                        CentralMoq = Convert.ToInt32(row["CentralMoq"])
+                    };
+                    entries.Add(entry.ItemNo, entry);
+                }
+
+                _cache.Set(CacheKeys.ItemMoqPair, entries,
+                    new MemoryCacheEntryOptions { Priority = CacheItemPriority.NeverRemove });
+                ItemMoqPairCount = entries.Count;
+                _logger.LogInformation("DatabaseCacheService: cached {Count} ItemMoqPairCache entries.", entries.Count);
+            }
+            catch (Exception ex)
+            {
+                // Keep the previous snapshot if a refresh fails.
+                _logger.LogError(ex, "DatabaseCacheService: failed to load ItemMoqPairCache from database.");
+            }
+        }
+
+        /// <summary>
+        /// Checks each order line against its CentralMoq quantity multiple. Pair ordering
+        /// is already enforced by the webshop and does not affect routing. Missing item
+        /// rules impose no restriction; a missing cache prevents central routing.
+        /// </summary>
+        public static bool AreCentralItemQuantitiesValid(
+            IMemoryCache cache, IEnumerable<OrderRequestItem> items, out string reason)
+        {
+            reason = null;
+            if (!cache.TryGetValue(CacheKeys.ItemMoqPair, out Dictionary<string, ItemMoqPairCacheEntry> entries)
+                || entries == null)
+            {
+                reason = "ItemMoqPairCache is unavailable.";
+                return false;
+            }
+
+            if (items == null)
+            {
+                reason = "Order items are missing.";
+                return false;
+            }
+
+            foreach (var item in items)
+            {
+                if (item == null || string.IsNullOrWhiteSpace(item.ArticleId)
+                    || !item.Quantity.HasValue || !double.IsFinite(item.Quantity.Value)
+                    || item.Quantity.Value <= 0)
+                {
+                    reason = "An order line has a missing item number or invalid quantity.";
+                    return false;
+                }
+
+                if (!entries.TryGetValue(item.ArticleId.Trim(), out var rule))
+                    continue;
+
+                if (rule.CentralMoq < 0)
+                {
+                    reason = $"Item {item.ArticleId} has an invalid CentralMoq ({rule.CentralMoq}).";
+                    return false;
+                }
+
+                // MOQ is a factor, not a minimum. Pair is handled by the webshop.
+                int factor = Math.Max(1, rule.CentralMoq);
+                if (item.Quantity.Value % factor != 0)
+                {
+                    reason = $"Item {item.ArticleId} quantity {item.Quantity.Value} must be a multiple of {factor} " +
+                        $"(CentralMoq={rule.CentralMoq}).";
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         // ------------------------------------------------------------------ //

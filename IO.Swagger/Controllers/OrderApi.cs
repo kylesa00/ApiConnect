@@ -956,8 +956,23 @@ namespace IO.Swagger.Controllers
             return objectResult;
         }
 
+        /// <summary>Checks quantity rules only after existing routing rules select central.</summary>
+        private bool ShouldRouteToCentral(OrderRequest orderRequest)
+        {
+            if (!ShouldRouteToCentralByCalendar(orderRequest))
+                return false;
+
+            if (DatabaseCacheService.AreCentralItemQuantitiesValid(_cache, orderRequest.Items, out var reason))
+                return true;
+
+            _logger.LogInformation(
+                "ShouldRouteToCentral: customerNr={CustomerNr} failed central quantity validation: {Reason} Routing to UrlBranches.",
+                orderRequest.CustomerNr, reason);
+            return false;
+        }
+
         /// <summary>
-        /// Determines whether an order should be sent to the central NAV web service.
+        /// Determines whether the calendar rules select the central NAV web service.
         /// <para>
         /// Matching rules (all must hold for a calendar row to be considered a hit):
         /// <list type="bullet">
@@ -975,7 +990,7 @@ namespace IO.Swagger.Controllers
         /// </para>
         /// Returns <c>true</c> when a matching row is found; otherwise <c>false</c>.
         /// </summary>
-        private bool ShouldRouteToCentral(OrderRequest orderRequest)
+        private bool ShouldRouteToCentralByCalendar(OrderRequest orderRequest)
         {
             // Guard: only apply branch-routing logic when the PickupBranchId is actually
             // present as a LocationCode in the cached calendar. If it is not, there are no
@@ -989,7 +1004,7 @@ namespace IO.Swagger.Controllers
             {
                 _logger.LogInformation(
                     "ShouldRouteToCentral: PickupBranchId={PickupBranchId} not found in calendar cache. " +
-                    "Routing to primary Url.",
+                    "Central route selected; checking item quantity rules.",
                     orderRequest.BranchId);
                 return true;
             }
@@ -1047,7 +1062,7 @@ namespace IO.Swagger.Controllers
                     "ShouldRouteToCentral: calendar match found for customerNr={CustomerNr}, " +
                     "sendMethod={SendMethod} (shipmentMethodCode={ShipmentMethodCode}), " +
                     "pickupBranchId={PickupBranchId}, transportRouteCode={TransportRouteCode}. " +
-                    "Routing to primary Url.",
+                    "Central route selected; checking item quantity rules.",
                     orderRequest.CustomerNr, orderRequest.SendMethod, shipmentMethodCode,
                     orderRequest.PickupBranchId, transportRouteCode);
                 return true;
