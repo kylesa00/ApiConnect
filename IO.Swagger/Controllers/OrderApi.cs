@@ -776,8 +776,8 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation(
-                "CreateOrder routing: customerNr={CustomerNr}, pickupBranchId={PickupBranchId}, routeToCentral={RouteToCentral}",
-                orderRequest.CustomerNr, orderRequest.PickupBranchId, shouldRouteToCentral);
+                "CreateOrder routing: customerNr={CustomerNr}, pickupBranchId={BranchId}, routeToCentral={RouteToCentral}",
+                orderRequest.CustomerNr, orderRequest.BranchId, shouldRouteToCentral);
 
             try
             {
