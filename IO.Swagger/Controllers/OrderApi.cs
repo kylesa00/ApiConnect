@@ -762,17 +762,23 @@ namespace IO.Swagger.Controllers
 
             Helpers.NavWebServiceReference navWebServiceReference = _dal.GetNavWebReference();
 
-            bool shouldRouteToCentral = ShouldRouteToCentralByCalendar(orderRequest);
+            bool straightToCentral = ShouldBeSentStraightToCentral(orderRequest);
+            bool shouldRouteToCentral= true;
 
-            if (shouldRouteToCentral == true )
-            {
-                var isMoqValidForCentral =
-                    DatabaseCacheService.AreCentralItemQuantitiesValid(_cache, orderRequest.Items,  out var reason);
-                
-                _logger.LogInformation(
-                    "ShouldRouteToCentral: customerNr={CustomerNr} failed central quantity validation: {Reason} Routing to UrlBranches.",
-                    orderRequest.CustomerNr, reason);
-                shouldRouteToCentral = isMoqValidForCentral;
+            if (!straightToCentral)
+            { 
+                shouldRouteToCentral = ShouldRouteToCentralByCalendar(orderRequest);
+
+                if(shouldRouteToCentral)
+                {
+                    var isMoqValidForCentral =
+                        DatabaseCacheService.AreCentralItemQuantitiesValid(_cache, orderRequest.Items, out var reason);
+
+                    _logger.LogInformation(
+                        "ShouldRouteToCentral: customerNr={CustomerNr} failed central quantity validation: {Reason} Routing to UrlBranches.",
+                        orderRequest.CustomerNr, reason);
+                    shouldRouteToCentral = isMoqValidForCentral;
+                }
             }
 
             _logger.LogInformation(
@@ -907,6 +913,24 @@ namespace IO.Swagger.Controllers
             }
         }
 
+        private bool ShouldBeSentStraightToCentral(OrderRequest orderRequest)
+        {
+            var allCalendarRows = DatabaseCacheService.GetOrderRoutingCalendar(_cache);
+            bool branchInCalendar = !string.IsNullOrEmpty(orderRequest.BranchId)
+                                    && allCalendarRows.Exists(row =>
+                                        string.Equals(row.LocationCode, orderRequest.BranchId, StringComparison.OrdinalIgnoreCase));
+
+            if (!branchInCalendar)
+            {
+                _logger.LogInformation(
+                    "ShouldRouteToCentral: PickupBranchId={PickupBranchId} not found in calendar cache. " +
+                    "Central route selected; checking item quantity rules.",
+                    orderRequest.BranchId);
+                return true;
+            }
+            return false;
+        }
+
         private IActionResult RespondToConnect(NavWebServiceReference.OrderConfirmation navResponse)
         {
             List<Availability> availabilities = new List<Availability>();
@@ -967,22 +991,6 @@ namespace IO.Swagger.Controllers
             return objectResult;
         }
 
-        /// <summary>Checks quantity rules only after existing routing rules select central.</summary>
-        private bool ShouldRouteToCentral(OrderRequest orderRequest)
-        {
-            
-            if (!ShouldRouteToCentralByCalendar(orderRequest))
-                return false;
-
-
-            if (! DatabaseCacheService.AreCentralItemQuantitiesValid(_cache, orderRequest.Items, out var reason))
-                return true;
-
-            _logger.LogInformation(
-                "ShouldRouteToCentral: customerNr={CustomerNr} failed central quantity validation: {Reason} Routing to UrlBranches.",
-                orderRequest.CustomerNr, reason);
-            return false;
-        }
 
         /// <summary>
         /// Determines whether the calendar rules select the central NAV web service.
