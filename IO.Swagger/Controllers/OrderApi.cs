@@ -762,16 +762,27 @@ namespace IO.Swagger.Controllers
 
             Helpers.NavWebServiceReference navWebServiceReference = _dal.GetNavWebReference();
 
-            bool routeToCentral = ShouldRouteToCentral(orderRequest);
+            bool shouldRouteToCentral = ShouldRouteToCentralByCalendar(orderRequest);
+
+            if (shouldRouteToCentral == true )
+            {
+                var isMoqValidForCentral =
+                    DatabaseCacheService.AreCentralItemQuantitiesValid(_cache, orderRequest.Items,  out var reason);
+                
+                _logger.LogInformation(
+                    "ShouldRouteToCentral: customerNr={CustomerNr} failed central quantity validation: {Reason} Routing to UrlBranches.",
+                    orderRequest.CustomerNr, reason);
+                shouldRouteToCentral = isMoqValidForCentral;
+            }
 
             _logger.LogInformation(
                 "CreateOrder routing: customerNr={CustomerNr}, pickupBranchId={PickupBranchId}, routeToCentral={RouteToCentral}",
-                orderRequest.CustomerNr, orderRequest.PickupBranchId, routeToCentral);
+                orderRequest.CustomerNr, orderRequest.PickupBranchId, shouldRouteToCentral);
 
             try
             {
 
-                var resolvedUrl = routeToCentral ? navWebServiceReference.Url : navWebServiceReference.UrlBranches;
+                var resolvedUrl = shouldRouteToCentral ? navWebServiceReference.Url : navWebServiceReference.UrlBranches;
 
                 var res = new NavWebServiceReference.ConnectIntegration_PortClient(NavWebServiceReference.ConnectIntegration_PortClient.EndpointConfiguration.ConnectIntegration_Port, resolvedUrl);
 
@@ -824,7 +835,7 @@ namespace IO.Swagger.Controllers
             }
             else
             {
-                if (routeToCentral && !string.IsNullOrEmpty(errorMessage) && errorMessage.StartsWith("99"))
+                if (shouldRouteToCentral && !string.IsNullOrEmpty(errorMessage) && errorMessage.StartsWith("99"))
                 {
                     // posalji ponovo na branch url
 
@@ -834,7 +845,7 @@ namespace IO.Swagger.Controllers
 
                     try
                     {
-                        routeToCentral = false;
+                        shouldRouteToCentral = false;
                         var resolvedUrl = navWebServiceReference.UrlBranches;
 
                         var res = new NavWebServiceReference.ConnectIntegration_PortClient(NavWebServiceReference.ConnectIntegration_PortClient.EndpointConfiguration.ConnectIntegration_Port, resolvedUrl);
@@ -959,10 +970,12 @@ namespace IO.Swagger.Controllers
         /// <summary>Checks quantity rules only after existing routing rules select central.</summary>
         private bool ShouldRouteToCentral(OrderRequest orderRequest)
         {
+            
             if (!ShouldRouteToCentralByCalendar(orderRequest))
                 return false;
 
-            if (DatabaseCacheService.AreCentralItemQuantitiesValid(_cache, orderRequest.Items, out var reason))
+
+            if (! DatabaseCacheService.AreCentralItemQuantitiesValid(_cache, orderRequest.Items, out var reason))
                 return true;
 
             _logger.LogInformation(
